@@ -7,7 +7,7 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  llama_dart:
+  llamadart:
     path: ../..  # Use local version for testing
   http: ^1.6.0
   path: ^1.8.3

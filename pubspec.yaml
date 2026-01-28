@@ -1,9 +1,9 @@
-name: llama_dart
+name: llamadart
 description: A Dart/Flutter plugin for llama.cpp - run LLM inference on any platform using GGUF models
 version: 0.0.1
-homepage: https://github.com/leehack/llama_dart
-repository: https://github.com/leehack/llama_dart
-issue_tracker: https://github.com/leehack/llama_dart/issues
+homepage: https://github.com/leehack/llamadart
+repository: https://github.com/leehack/llamadart
+issue_tracker: https://github.com/leehack/llamadart/issues
 topics:
   - llama
   - llm
