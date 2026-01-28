@@ -1,6 +1,6 @@
 # Agent Guide: Native Layer
 
-This document guides AI agents and developers on maintaining the native layer of `llama_dart`, specifically the vendoring of `llama.cpp`.
+This document guides AI agents and developers on maintaining the native layer of `llamadart`, specifically the vendoring of `llama.cpp`.
 
 ## Vendoring Strategy: "Zero-Overwrite" / "Zero-Patch"
 
@@ -40,7 +40,7 @@ The update process is fully automated.
     cd example/chat_app/android
     ./gradlew clean assembleDebug
     ```
-    Ensure the build log shows `llama_dart: Vulkan backend ENABLED`.
+    Ensure the build log shows `llamadart: Vulkan backend ENABLED`.
 
 ## Files to Watch
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
-project(llama_dart_native LANGUAGES C CXX)
+project(llamadart_native LANGUAGES C CXX)
 
-message(STATUS "llama_dart: Configuring native build for Android...")
+message(STATUS "llamadart: Configuring native build for Android...")
 
 
 
@@ -40,7 +40,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static" FORCE)
 if(APPLE)
     set(GGML_METAL ON CACHE BOOL "Enable Metal backend" FORCE)
     add_compile_definitions(GGML_USE_METAL)
-    message(STATUS "llama_dart: Metal backend ENABLED (Apple platform)")
+    message(STATUS "llamadart: Metal backend ENABLED (Apple platform)")
 endif()
 
 option(LLAMA_DART_NO_VULKAN "Disable Vulkan GPU backend" OFF)
@@ -48,11 +48,11 @@ option(LLAMA_DART_NO_VULKAN "Disable Vulkan GPU backend" OFF)
 if(NOT APPLE AND NOT LLAMA_DART_NO_VULKAN)
     # If parent (android/CMakeLists.txt) already enabled Vulkan via CACHE variable, trust it.
     if(GGML_VULKAN OR CMAKE_SYSTEM_NAME MATCHES "Android")
-         message(STATUS "llama_dart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...")
+         message(STATUS "llamadart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...")
          set(Vulkan_FOUND TRUE)
          set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan backend" FORCE)
     else()
-        message(STATUS "llama_dart: Checking for Vulkan SDK...")
+        message(STATUS "llamadart: Checking for Vulkan SDK...")
         find_package(Vulkan QUIET)
     endif()
 
@@ -61,18 +61,18 @@ if(NOT APPLE AND NOT LLAMA_DART_NO_VULKAN)
         # Use a list variable to defer application to target
         set(LLAMA_DART_COMPILE_DEFS GGML_USE_VULKAN)
         add_compile_definitions(GGML_USE_VULKAN)
-        message(WARNING "llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)")
+        message(WARNING "llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)")
         
         # Ensure we link against Vulkan
         if(NOT TARGET Vulkan::Vulkan)
-            message(STATUS "llama_dart: Creating manual Vulkan::Vulkan target for ggml compatibility")
+            message(STATUS "llamadart: Creating manual Vulkan::Vulkan target for ggml compatibility")
             add_library(Vulkan::Vulkan INTERFACE IMPORTED)
             if(Vulkan_LIBRARY)
                  set_target_properties(Vulkan::Vulkan PROPERTIES INTERFACE_LINK_LIBRARIES "${Vulkan_LIBRARY}")
-                 message(STATUS "llama_dart: Vulkan::Vulkan mapped to ${Vulkan_LIBRARY}")
+                 message(STATUS "llamadart: Vulkan::Vulkan mapped to ${Vulkan_LIBRARY}")
             else()
                  set_target_properties(Vulkan::Vulkan PROPERTIES INTERFACE_LINK_LIBRARIES "vulkan")
-                 message(STATUS "llama_dart: Vulkan::Vulkan mapped to 'vulkan'")
+                 message(STATUS "llamadart: Vulkan::Vulkan mapped to 'vulkan'")
             endif()
 
             if(Vulkan_INCLUDE_DIR)
@@ -82,7 +82,7 @@ if(NOT APPLE AND NOT LLAMA_DART_NO_VULKAN)
 
 
     else()
-        message(WARNING "llama_dart: Vulkan SDK not found, Vulkan backend DISABLED")
+        message(WARNING "llamadart: Vulkan SDK not found, Vulkan backend DISABLED")
     endif()
 endif()
 
@@ -93,9 +93,9 @@ if(NOT APPLE AND NOT LLAMA_DART_NO_CUDA AND NOT CMAKE_SYSTEM_NAME MATCHES "Andro
     check_language(CUDA)
     if(CMAKE_CUDA_COMPILER)
         set(GGML_CUDA ON CACHE BOOL "Enable CUDA backend" FORCE)
-        message(STATUS "llama_dart: CUDA backend ENABLED")
+        message(STATUS "llamadart: CUDA backend ENABLED")
     else()
-        message(STATUS "llama_dart: CUDA toolkit not found, CUDA backend DISABLED")
+        message(STATUS "llamadart: CUDA toolkit not found, CUDA backend DISABLED")
     endif()
 endif()
 
@@ -120,14 +120,14 @@ set(LLAMA_BUILD_SERVER OFF CACHE BOOL "Build server" FORCE)
 # when building vulkan-shaders-gen (a host tool) inside the Android cross-compilation context.
 # We generate a custom host toolchain file to pass CMAKE_MAKE_PROGRAM explicitly.
 if(ANDROID AND NOT GGML_VULKAN_SHADERS_GEN_TOOLCHAIN)
-    message(STATUS "llama_dart: Generating host toolchain for Vulkan shader compiler...")
+    message(STATUS "llamadart: Generating host toolchain for Vulkan shader compiler...")
     
     # Add our local ninja shim to PATH for subprocesses
     set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}:$ENV{PATH}")
-    message(STATUS "llama_dart: Added ${CMAKE_CURRENT_SOURCE_DIR} to PATH (for ninja shim)")
+    message(STATUS "llamadart: Added ${CMAKE_CURRENT_SOURCE_DIR} to PATH (for ninja shim)")
     
     # Detect host compilers (matches logic in ggml-vulkan/CMakeLists.txt but exposes variables we need)
-    message(STATUS "llama_dart: CMAKE_MAKE_PROGRAM is ${CMAKE_MAKE_PROGRAM}")
+    message(STATUS "llamadart: CMAKE_MAKE_PROGRAM is ${CMAKE_MAKE_PROGRAM}")
     if(APPLE)
         find_program(HOST_C_COMPILER NAMES clang gcc cc NO_CMAKE_FIND_ROOT_PATH)
         find_program(HOST_CXX_COMPILER NAMES clang++ g++ c++ NO_CMAKE_FIND_ROOT_PATH)
@@ -140,7 +140,7 @@ if(ANDROID AND NOT GGML_VULKAN_SHADERS_GEN_TOOLCHAIN)
     endif()
 
     if(NOT HOST_C_COMPILER OR NOT HOST_CXX_COMPILER)
-        message(WARNING "llama_dart: Could not find host compiler! Vulkan build might fail.")
+        message(WARNING "llamadart: Could not find host compiler! Vulkan build might fail.")
     else()
         set(HOST_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/android-host-toolchain.cmake")
         
@@ -149,7 +149,7 @@ if(ANDROID AND NOT GGML_VULKAN_SHADERS_GEN_TOOLCHAIN)
         if(NOT CMAKE_MAKE_PROGRAM)
             find_program(CMAKE_MAKE_PROGRAM NAMES ninja make)
         endif()
-        message(STATUS "llama_dart: Resolved CMAKE_MAKE_PROGRAM for host: ${CMAKE_MAKE_PROGRAM}")
+        message(STATUS "llamadart: Resolved CMAKE_MAKE_PROGRAM for host: ${CMAKE_MAKE_PROGRAM}")
 
         file(WRITE "${HOST_TOOLCHAIN_FILE}" 
             "set(CMAKE_MAKE_PROGRAM \"${CMAKE_MAKE_PROGRAM}\" CACHE STRING \"make program\" FORCE)\n"
@@ -160,11 +160,11 @@ if(ANDROID AND NOT GGML_VULKAN_SHADERS_GEN_TOOLCHAIN)
         )
         
         set(GGML_VULKAN_SHADERS_GEN_TOOLCHAIN "${HOST_TOOLCHAIN_FILE}" CACHE FILEPATH "Host toolchain for Vulkan shader generation" FORCE)
-        message(STATUS "llama_dart: Using generated host toolchain (cached): ${HOST_TOOLCHAIN_FILE}")
+        message(STATUS "llamadart: Using generated host toolchain (cached): ${HOST_TOOLCHAIN_FILE}")
     endif()
 endif()
 
-message(STATUS "llama_dart: CHECKING GGML_VULKAN: ${GGML_VULKAN}")
+message(STATUS "llamadart: CHECKING GGML_VULKAN: ${GGML_VULKAN}")
 # Include the vendored llama.cpp source
 add_subdirectory(llama_cpp)
 
@@ -173,7 +173,7 @@ target_compile_definitions(llama PUBLIC LLAMA_SHARED)
 target_compile_definitions(ggml PUBLIC LLAMA_SHARED)
 
 # Define the shared library that Flutter will load
-add_library(llama_cpp SHARED llama_dart.cpp)
+add_library(llama_cpp SHARED llamadart.cpp)
 
 
 
@@ -181,7 +181,7 @@ if(GGML_VULKAN)
     target_compile_definitions(llama_cpp PUBLIC GGML_USE_VULKAN)
     target_compile_definitions(llama PUBLIC GGML_USE_VULKAN)
     target_compile_definitions(ggml PUBLIC GGML_USE_VULKAN)
-    message(STATUS "llama_dart: Applied GGML_USE_VULKAN to all native targets")
+    message(STATUS "llamadart: Applied GGML_USE_VULKAN to all native targets")
 endif()
 
 if(LLAMA_DART_COMPILE_DEFS)
@@ -197,7 +197,7 @@ if(APPLE)
 elseif(ANDROID)
     if(GGML_VULKAN)
         target_link_libraries(llama_cpp PRIVATE -Wl,--whole-archive llama ggml -Wl,--no-whole-archive log)
-        message(STATUS "llama_dart: Linking Vulkan backend with --whole-archive")
+        message(STATUS "llamadart: Linking Vulkan backend with --whole-archive")
     else()
         target_link_libraries(llama_cpp PRIVATE -Wl,--whole-archive llama -Wl,--no-whole-archive log)
     endif()

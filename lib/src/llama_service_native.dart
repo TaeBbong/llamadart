@@ -6,13 +6,13 @@ import 'dart:isolate';
 import 'dart:math';
 import 'package:ffi/ffi.dart';
 import 'package:http/http.dart' as http;
-import 'package:llama_dart/src/loader.dart';
-import 'package:llama_dart/src/generated/llama_bindings.dart';
-import 'package:llama_dart/src/llama_service_interface.dart';
-import 'package:llama_dart/src/native_helpers.dart';
+import 'package:llamadart/src/loader.dart';
+import 'package:llamadart/src/generated/llama_bindings.dart';
+import 'package:llamadart/src/llama_service_interface.dart';
+import 'package:llamadart/src/native_helpers.dart';
 
 // Export the interface types
-export 'package:llama_dart/src/llama_service_interface.dart';
+export 'package:llamadart/src/llama_service_interface.dart';
 
 // --- Messages ---
 class _InitRequest {

@@ -1,6 +1,6 @@
-# llama_dart Examples
+# llamadart Examples
 
-This directory contains example applications demonstrating how to use the llama_dart package.
+This directory contains example applications demonstrating how to use the llamadart package.
 
 ## Available Examples
 
@@ -46,8 +46,8 @@ flutter run
 
 ## Testing pub.dev Package
 
-These examples simulate how users will use llama_dart when published to pub.dev:
-- They add llama_dart as a dependency
+These examples simulate how users will use llamadart when published to pub.dev:
+- They add llamadart as a dependency
 - They rely on automatic library download
 - They don't need to run build scripts
 
@@ -61,7 +61,7 @@ See HuggingFace for more: https://huggingface.co/models?search=gguf
 
 ## Model Formats
 
-llama_dart supports GGUF format models (converted for llama.cpp).
+llamadart supports GGUF format models (converted for llama.cpp).
 
 ## Architecture
 
@@ -82,8 +82,8 @@ example/
 ## Need Help?
 
 - Check individual example README files
-- Report issues: https://github.com/your-org/llama_dart/issues
-- Docs: https://github.com/your-org/llama_dart
+- Report issues: https://github.com/your-org/llamadart/issues
+- Docs: https://github.com/your-org/llamadart
 
 ## Running Tests
 
@@ -147,11 +147,11 @@ dart runner.dart chat
 
 To contribute new examples:
 1. Create a new subdirectory in `example/`
-2. Add a pubspec.yaml with llama_dart as dependency
+2. Add a pubspec.yaml with llamadart as dependency
 3. Include a README.md with setup instructions
 4. Test on multiple platforms if possible
 5. Add integration test to runner.dart if applicable
 
 ## License
 
-These examples are part of the llama_dart project and follow the same license.
+These examples are part of the llamadart project and follow the same license.

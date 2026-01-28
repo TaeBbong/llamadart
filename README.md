@@ -1,4 +1,4 @@
-# llama_dart
+# llamadart
 
 A Dart/Flutter plugin for `llama.cpp`. Run LLM inference directly in Dart and Flutter applications using GGUF models with hardware acceleration.
 
@@ -24,10 +24,10 @@ We welcome contributors to help us test on more platforms (especially Windows)!
 ---
 
 ### 1. Add Dependency
-Add `llama_dart` to your `pubspec.yaml`:
+Add `llamadart` to your `pubspec.yaml`:
 ```yaml
 dependencies:
-  llama_dart: ^0.1.0
+  llamadart: ^0.1.0
 ```
 
 ### 2. Platform Setup
@@ -56,7 +56,7 @@ The plugin uses CMake to compile the native library automatically.
 **Offline / Bundled Usage (Optional):**
 1.  Download assets to your `assets/` directory:
     ```bash
-    dart run llama_dart:download_wllama
+    dart run llamadart:download_wllama
     ```
 2.  Add the folder to your `pubspec.yaml`:
     ```yaml
@@ -146,7 +146,7 @@ cmake -DLLAMA_DART_NO_VULKAN=ON ...
 ## 🚀 Usage
 
 ```dart
-import 'package:llama_dart/llama_dart.dart';
+import 'package:llamadart/llamadart.dart';
 
 void main() async {
   final service = LlamaService();

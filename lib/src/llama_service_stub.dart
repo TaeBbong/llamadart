@@ -1,7 +1,7 @@
-import 'package:llama_dart/src/llama_service_interface.dart';
+import 'package:llamadart/src/llama_service_interface.dart';
 
 // Export interface
-export 'package:llama_dart/src/llama_service_interface.dart';
+export 'package:llamadart/src/llama_service_interface.dart';
 
 /// Stub implementation that throws if used on unsupported platforms.
 class LlamaService implements LlamaServiceBase {

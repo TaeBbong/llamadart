@@ -1,6 +1,6 @@
-# Contributing into llama_dart
+# Contributing into llamadart
 
-Thank you for your interest in contributing to `llama_dart`! We welcome contributions from the community to help improve this package.
+Thank you for your interest in contributing to `llamadart`! We welcome contributions from the community to help improve this package.
 
 ## Prerequisites
 
@@ -29,8 +29,8 @@ The project maps closely to the `llama.cpp` structure:
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/netdur/llama_dart.git
-    cd llama_dart
+    git clone https://github.com/netdur/llamadart.git
+    cd llamadart
     ```
 
 2.  **Clone submodules** (if applicable):

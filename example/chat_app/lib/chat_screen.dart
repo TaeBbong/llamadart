@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'models/chat_model.dart';
 import 'screens/model_selection_screen.dart';
-import 'package:llama_dart/llama_dart.dart';
+import 'package:llamadart/llama_dart.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});

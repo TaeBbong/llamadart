@@ -1,4 +1,4 @@
-# Agent Guidelines for llama_dart
+# Agent Guidelines for llamadart
 
 This repository is a Dart/Flutter plugin for `llama.cpp` using FFI. It allows running LLM inference directly in Dart and Flutter applications.
 
@@ -29,7 +29,7 @@ dart run tool/build_ios.dart
 ### Build (Web / WASM)
 Standard builds use CDN. For local assets, use:
 ```bash
-dart run llama_dart:download_wllama
+dart run llamadart:download_wllama
 ```
 
 ### Build (Dart Bindings)
@@ -55,7 +55,7 @@ There are currently two types of tests:
 These are standalone scripts in `test/` that do not use `package:test`.
 ```bash
 # Run inference smoke test
-dart run example/basic_app/bin/llama_dart_basic_example.dart
+dart run example/basic_app/bin/llamadart_basic_example.dart
 
 
 # Run basic check
@@ -75,8 +75,8 @@ dart test test/my_new_test.dart
 **3. Linux Verification (Docker)**
 To verify Linux support (native build + inference):
 ```bash
-docker build -t llama_dart_basic -f example/basic_app/Dockerfile .
-docker run --rm llama_dart_basic
+docker build -t llamadart_basic -f example/basic_app/Dockerfile .
+docker run --rm llamadart_basic
 ```
 
 ## 2. Code Style & Conventions
@@ -96,7 +96,7 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
-import 'package:llama_dart/src/generated/llama_bindings.dart';
+import 'package:llamadart/src/generated/llama_bindings.dart';
 
 import 'src/utils.dart';
 ```
@@ -113,12 +113,12 @@ import 'src/utils.dart';
 - **Strings**: Use `.toNativeUtf8()` for passing strings to C. Remember to `malloc.free()` the pointer.
 
 ### Architecture
-- **`lib/llama_dart.dart`**: Entry point with conditional exports for native/web.
+- **`lib/llamadart.dart`**: Entry point with conditional exports for native/web.
 - **`lib/src/llama_service_interface.dart`**: Common interface `LlamaServiceBase`.
 - **`lib/src/llama_service_native.dart`**: Desktop/Mobile implementation (FFI).
 - **`lib/src/llama_service_web.dart`**: Web implementation (wllama/JS).
 - **`tool/build_ios.dart`**: Critical script for generating the iOS `llama_cpp.xcframework`. 
-- **`ios/llama_dart.podspec`**: Configures the iOS plugin. Uses static linking (`s.static_framework = true`) and requires `Accelerate` and `Metal` frameworks.
+- **`ios/llamadart.podspec`**: Configures the iOS plugin. Uses static linking (`s.static_framework = true`) and requires `Accelerate` and `Metal` frameworks.
 
 ### macOS & iOS Integration
 - **Symbols**: Symbols must be exported to be visible to `DynamicLibrary.process()`. Ensure `-all_load` and `-Wl,-export_dynamic` are in the linker flags.

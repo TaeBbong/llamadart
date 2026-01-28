@@ -47,6 +47,6 @@ flutter:
         ffiPlugin: true
       web:
         pluginClass: LlamaDartWeb
-        fileName: llama_dart_web.dart
+        fileName: llamadart_web.dart
 
 

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:ffi/ffi.dart';
-import 'package:llama_dart/src/loader.dart';
+import 'package:llamadart/src/loader.dart';
 
 void main() {
   print('Loading llama.cpp...');

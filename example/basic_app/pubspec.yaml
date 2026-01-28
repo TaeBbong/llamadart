@@ -1,5 +1,5 @@
-name: llama_dart_basic_example
-description: A basic example of using llama_dart package
+name: llamadart_basic_example
+description: A basic example of using llamadart package
 publish_to: 'none'
 version: 1.0.0
 

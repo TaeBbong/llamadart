@@ -3,11 +3,11 @@ Initialized jansi services in: /Users/jhin.lee/.gradle/native
 The client will now receive all logging from the daemon (pid: 67936). The daemon log file: /Users/jhin.lee/.gradle/daemon/8.14/daemon-67936.out.log
 Starting 76th build in daemon [uptime: 4 hrs 37 mins 33.666 secs, performance: 100%, GC rate: 0.00/s, heap usage: 1% of 8 GiB, non-heap usage: 7% of 4 GiB]
 Using 16 worker leases.
-Now considering [/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android, /Users/jhin.lee/development/flutter/packages/flutter_tools/gradle] as hierarchies to watch
+Now considering [/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android, /Users/jhin.lee/development/flutter/packages/flutter_tools/gradle] as hierarchies to watch
 Watching the file system is configured to be enabled if available
 File system watching is active
 Starting Build
-Now considering [/Users/jhin.lee/development/flutter/packages/flutter_tools/gradle, /opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android] as hierarchies to watch
+Now considering [/Users/jhin.lee/development/flutter/packages/flutter_tools/gradle, /opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android] as hierarchies to watch
 
 > Configure project :gradle
 Evaluating project ':gradle' using build file '/Users/jhin.lee/development/flutter/packages/flutter_tools/gradle/build.gradle.kts'.
@@ -73,12 +73,12 @@ Caching disabled for task ':gradle:jar' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':gradle:jar' as it is up-to-date.
-Settings evaluated using settings file '/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android/settings.gradle.kts'.
-Projects loaded. Root project using build file '/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android/build.gradle.kts'.
-Included projects: [root project 'android', project ':app', project ':file_picker', project ':flutter_plugin_android_lifecycle', project ':llama_dart', project ':path_provider_android', project ':shared_preferences_android']
+Settings evaluated using settings file '/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android/settings.gradle.kts'.
+Projects loaded. Root project using build file '/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android/build.gradle.kts'.
+Included projects: [root project 'android', project ':app', project ':file_picker', project ':flutter_plugin_android_lifecycle', project ':llamadart', project ':path_provider_android', project ':shared_preferences_android']
 
 > Configure project :app
-Evaluating project ':app' using build file '/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android/app/build.gradle.kts'.
+Evaluating project ':app' using build file '/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android/app/build.gradle.kts'.
 Resolved plugin [id: 'com.android.application']
 Resolved plugin [id: 'kotlin-android']
 Resolved plugin [id: 'dev.flutter.flutter-gradle-plugin']
@@ -182,7 +182,7 @@ C/C++: Not considering ANDROID_NDK_HOME because support was removed after deprec
 C/C++: sdkFolder is /Users/jhin.lee/Library/Android/sdk
 
 > Configure project :
-Evaluating root project 'android' using build file '/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android/build.gradle.kts'.
+Evaluating root project 'android' using build file '/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android/build.gradle.kts'.
 
 > Configure project :file_picker
 Evaluating project ':file_picker' using build file '/Users/jhin.lee/.pub-cache/hosted/pub.dev/file_picker-8.3.7/android/build.gradle'.
@@ -192,8 +192,8 @@ Using default execution profile
 Evaluating project ':flutter_plugin_android_lifecycle' using build file '/Users/jhin.lee/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.33/android/build.gradle'.
 Using default execution profile
 
-> Configure project :llama_dart
-Evaluating project ':llama_dart' using build file '/opt/UnitySrc/personal/ocs-test/llama_dart/android/build.gradle'.
+> Configure project :llamadart
+Evaluating project ':llamadart' using build file '/opt/UnitySrc/personal/ocs-test/llamadart/android/build.gradle'.
 Using default execution profile
 Using Kotlin Gradle Plugin gradle813 variant
 C/C++: android.ndkVersion from module build.gradle is [29.0.14206865]
@@ -303,53 +303,53 @@ Using Kotlin Gradle Plugin gradle813 variant
 Your project is configured with Android NDK 28.2.13676358, but the following plugin(s) depend on a different Android NDK version:
 - file_picker requires Android NDK 27.0.12077973
 - flutter_plugin_android_lifecycle requires Android NDK 27.0.12077973
-- llama_dart requires Android NDK 29.0.14206865
+- llamadart requires Android NDK 29.0.14206865
 - path_provider_android requires Android NDK 27.0.12077973
 - shared_preferences_android requires Android NDK 27.0.12077973
 Fix this issue by using the highest Android NDK version (they are backward compatible).
-Add the following to /opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android/app/build.gradle.kts:
+Add the following to /opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android/app/build.gradle.kts:
 
     android {
         ndkVersion = "29.0.14206865"
         ...
     }
 All projects evaluated.
-Task path ':llama_dart:assembleDebug' matched project ':llama_dart'
+Task path ':llamadart:assembleDebug' matched project ':llamadart'
 Task name matched 'assembleDebug'
-Selected primary task 'assembleDebug' from project :llama_dart
-Tasks to be executed: [task ':llama_dart:preBuild', task ':llama_dart:preDebugBuild', task ':llama_dart:preProfileBuild', task ':llama_dart:configureCMakeDebug[arm64-v8a]', task ':llama_dart:buildCMakeDebug[arm64-v8a]', task ':llama_dart:configureCMakeDebug[armeabi-v7a]', task ':llama_dart:buildCMakeDebug[armeabi-v7a]', task ':llama_dart:configureCMakeDebug[x86]', task ':llama_dart:buildCMakeDebug[x86]', task ':llama_dart:configureCMakeDebug[x86_64]', task ':llama_dart:buildCMakeDebug[x86_64]', task ':llama_dart:mergeDebugJniLibFolders', task ':llama_dart:mergeDebugNativeLibs', task ':llama_dart:stripDebugDebugSymbols', task ':llama_dart:copyDebugJniLibsProjectAndLocalJars', task ':llama_dart:checkKotlinGradlePluginConfigurationErrors', task ':llama_dart:generateDebugResValues', task ':llama_dart:generateDebugResources', task ':llama_dart:packageDebugResources', task ':llama_dart:parseDebugLocalResources', task ':llama_dart:generateDebugRFile', task ':llama_dart:compileDebugKotlin', task ':llama_dart:extractDebugAnnotations', task ':llama_dart:extractDeepLinksForAarDebug', task ':llama_dart:mergeDebugShaders', task ':llama_dart:compileDebugShaders', task ':llama_dart:generateDebugAssets', task ':llama_dart:mergeDebugAssets', task ':llama_dart:javaPreCompileDebug', task ':llama_dart:compileDebugJavaWithJavac', task ':llama_dart:mergeDebugGeneratedProguardFiles', task ':llama_dart:mergeDebugConsumerProguardFiles', task ':llama_dart:prepareDebugArtProfile', task ':llama_dart:prepareLintJarForPublish', task ':llama_dart:processDebugManifest', task ':llama_dart:processDebugJavaRes', task ':llama_dart:mergeDebugJavaResource', task ':llama_dart:syncDebugLibJars', task ':llama_dart:writeDebugAarMetadata', task ':llama_dart:bundleDebugAar', task ':llama_dart:assembleDebug']
+Selected primary task 'assembleDebug' from project :llamadart
+Tasks to be executed: [task ':llamadart:preBuild', task ':llamadart:preDebugBuild', task ':llamadart:preProfileBuild', task ':llamadart:configureCMakeDebug[arm64-v8a]', task ':llamadart:buildCMakeDebug[arm64-v8a]', task ':llamadart:configureCMakeDebug[armeabi-v7a]', task ':llamadart:buildCMakeDebug[armeabi-v7a]', task ':llamadart:configureCMakeDebug[x86]', task ':llamadart:buildCMakeDebug[x86]', task ':llamadart:configureCMakeDebug[x86_64]', task ':llamadart:buildCMakeDebug[x86_64]', task ':llamadart:mergeDebugJniLibFolders', task ':llamadart:mergeDebugNativeLibs', task ':llamadart:stripDebugDebugSymbols', task ':llamadart:copyDebugJniLibsProjectAndLocalJars', task ':llamadart:checkKotlinGradlePluginConfigurationErrors', task ':llamadart:generateDebugResValues', task ':llamadart:generateDebugResources', task ':llamadart:packageDebugResources', task ':llamadart:parseDebugLocalResources', task ':llamadart:generateDebugRFile', task ':llamadart:compileDebugKotlin', task ':llamadart:extractDebugAnnotations', task ':llamadart:extractDeepLinksForAarDebug', task ':llamadart:mergeDebugShaders', task ':llamadart:compileDebugShaders', task ':llamadart:generateDebugAssets', task ':llamadart:mergeDebugAssets', task ':llamadart:javaPreCompileDebug', task ':llamadart:compileDebugJavaWithJavac', task ':llamadart:mergeDebugGeneratedProguardFiles', task ':llamadart:mergeDebugConsumerProguardFiles', task ':llamadart:prepareDebugArtProfile', task ':llamadart:prepareLintJarForPublish', task ':llamadart:processDebugManifest', task ':llamadart:processDebugJavaRes', task ':llamadart:mergeDebugJavaResource', task ':llamadart:syncDebugLibJars', task ':llamadart:writeDebugAarMetadata', task ':llamadart:bundleDebugAar', task ':llamadart:assembleDebug']
 Tasks that were excluded: []
-Resolve mutations for :llama_dart:preBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
-:llama_dart:preBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
+Resolve mutations for :llamadart:preBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
+:llamadart:preBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
 
-> Task :llama_dart:preBuild UP-TO-DATE
-Skipping task ':llama_dart:preBuild' as it has no actions.
-Resolve mutations for :llama_dart:preDebugBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
-:llama_dart:preDebugBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
+> Task :llamadart:preBuild UP-TO-DATE
+Skipping task ':llamadart:preBuild' as it has no actions.
+Resolve mutations for :llamadart:preDebugBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
+:llamadart:preDebugBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
 
-> Task :llama_dart:preDebugBuild UP-TO-DATE
-Skipping task ':llama_dart:preDebugBuild' as it has no actions.
-Resolve mutations for :llama_dart:preProfileBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
-:llama_dart:preProfileBuild (Thread[#18310,included builds,5,main]) started.
+> Task :llamadart:preDebugBuild UP-TO-DATE
+Skipping task ':llamadart:preDebugBuild' as it has no actions.
+Resolve mutations for :llamadart:preProfileBuild (Thread[#18317,Execution worker Thread 7,5,main]) started.
+:llamadart:preProfileBuild (Thread[#18310,included builds,5,main]) started.
 
-> Task :llama_dart:preProfileBuild UP-TO-DATE
-Skipping task ':llama_dart:preProfileBuild' as it has no actions.
-Resolve mutations for :llama_dart:configureCMakeDebug[arm64-v8a] (Thread[#18310,included builds,5,main]) started.
-:llama_dart:configureCMakeDebug[arm64-v8a] (Thread[#18310,included builds,5,main]) started.
+> Task :llamadart:preProfileBuild UP-TO-DATE
+Skipping task ':llamadart:preProfileBuild' as it has no actions.
+Resolve mutations for :llamadart:configureCMakeDebug[arm64-v8a] (Thread[#18310,included builds,5,main]) started.
+:llamadart:configureCMakeDebug[arm64-v8a] (Thread[#18310,included builds,5,main]) started.
 
-> Task :llama_dart:configureCMakeDebug[arm64-v8a] FAILED
-Caching disabled for task ':llama_dart:configureCMakeDebug[arm64-v8a]' because:
+> Task :llamadart:configureCMakeDebug[arm64-v8a] FAILED
+Caching disabled for task ':llamadart:configureCMakeDebug[arm64-v8a]' because:
   Build cache is disabled
   Caching has been disabled for the task
-Task ':llama_dart:configureCMakeDebug[arm64-v8a]' is not up-to-date because:
+Task ':llamadart:configureCMakeDebug[arm64-v8a]' is not up-to-date because:
   Task.upToDateWhen is false.
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : Start JSON generation. Platform version: 21 min SDK version: arm64-v8a
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : rebuilding JSON /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android_gradle_build.json due to:
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : - no fingerprint file, will remove stale configuration folder
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : removing stale contents from '/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a'
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : created folder '/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a'
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : executing cmake /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
-  -H/opt/UnitySrc/personal/ocs-test/llama_dart/android \
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : Start JSON generation. Platform version: 21 min SDK version: arm64-v8a
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : rebuilding JSON /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android_gradle_build.json due to:
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : - no fingerprint file, will remove stale configuration folder
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : removing stale contents from '/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a'
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : created folder '/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a'
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : executing cmake /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
+  -H/opt/UnitySrc/personal/ocs-test/llamadart/android \
   -DCMAKE_SYSTEM_NAME=Android \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DCMAKE_SYSTEM_VERSION=21 \
@@ -361,14 +361,14 @@ C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile
   -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake \
   -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
   "-DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED" \
-  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
-  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
   -DCMAKE_BUILD_TYPE=Debug \
-  -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a \
+  -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a \
   -GNinja
 
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
-  -H/opt/UnitySrc/personal/ocs-test/llama_dart/android \
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
+  -H/opt/UnitySrc/personal/ocs-test/llamadart/android \
   -DCMAKE_SYSTEM_NAME=Android \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DCMAKE_SYSTEM_VERSION=21 \
@@ -380,20 +380,20 @@ C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile
   -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake \
   -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
   "-DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED" \
-  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
-  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
   -DCMAKE_BUILD_TYPE=Debug \
-  -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a \
+  -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a \
   -GNinja
 
-Starting process 'command '/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake''. Working directory: /opt/UnitySrc/personal/ocs-test/llama_dart/android Command: /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake -H/opt/UnitySrc/personal/ocs-test/llama_dart/android -DCMAKE_SYSTEM_NAME=Android -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_SYSTEM_VERSION=21 -DANDROID_PLATFORM=android-21 -DANDROID_ABI=arm64-v8a -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_ANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja -DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_BUILD_TYPE=Debug -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a -GNinja
+Starting process 'command '/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake''. Working directory: /opt/UnitySrc/personal/ocs-test/llamadart/android Command: /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake -H/opt/UnitySrc/personal/ocs-test/llamadart/android -DCMAKE_SYSTEM_NAME=Android -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_SYSTEM_VERSION=21 -DANDROID_PLATFORM=android-21 -DANDROID_ABI=arm64-v8a -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_ANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja -DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_BUILD_TYPE=Debug -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a -GNinja
 Successfully started process 'command '/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake''
-C/C++: CMake Warning at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/CMakeLists.txt:68 (message):
-C/C++:   llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
-C/C++: CMake Error at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
+C/C++: CMake Warning at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/CMakeLists.txt:68 (message):
+C/C++:   llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
+C/C++: CMake Error at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
 C/C++:   Unknown CMake command "llama_add_compile_flags".
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : Received process result: 1
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : JSON generation completed with problem. Exception: com.android.ide.common.process.ProcessException: -- The C compiler identification is Clang 21.0.0
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : Received process result: 1
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : JSON generation completed with problem. Exception: com.android.ide.common.process.ProcessException: -- The C compiler identification is Clang 21.0.0
 -- The CXX compiler identification is Clang 21.0.0
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
@@ -405,20 +405,20 @@ C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile
 -- Check for working CXX compiler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- llama_dart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
--- llama_dart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
--- llama_dart: Vulkan backend ENABLED for Android
--- llama_dart: GGML_VULKAN initial state: ON
--- llama_dart: ANDROID state: 1
--- llama_dart: CMAKE_SYSTEM_NAME: Android
--- llama_dart: GLOBAL GGML_USE_VULKAN applied
--- llama_dart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
--- llama_dart: Creating manual Vulkan::Vulkan target for ggml compatibility
--- llama_dart: Vulkan::Vulkan mapped to vulkan
--- llama_dart: Generating host toolchain for Vulkan shader compiler...
--- llama_dart: Added /opt/UnitySrc/personal/ocs-test/llama_dart/src/native to PATH (for ninja shim)
--- llama_dart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
--- llama_dart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+-- llamadart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
+-- llamadart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
+-- llamadart: Vulkan backend ENABLED for Android
+-- llamadart: GGML_VULKAN initial state: ON
+-- llamadart: ANDROID state: 1
+-- llamadart: CMAKE_SYSTEM_NAME: Android
+-- llamadart: GLOBAL GGML_USE_VULKAN applied
+-- llamadart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
+-- llamadart: Creating manual Vulkan::Vulkan target for ggml compatibility
+-- llamadart: Vulkan::Vulkan mapped to vulkan
+-- llamadart: Generating host toolchain for Vulkan shader compiler...
+-- llamadart: Added /opt/UnitySrc/personal/ocs-test/llamadart/src/native to PATH (for ninja shim)
+-- llamadart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
+-- llamadart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
 -- The ASM compiler identification is Clang with GNU-like command-line
 -- Found assembler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang
 -- Setting GGML_NATIVE_DEFAULT to OFF
@@ -459,17 +459,17 @@ C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile
 -- GL_NV_cooperative_matrix2 not supported by glslc
 -- GL_EXT_integer_dot_product not supported by glslc
 -- GL_EXT_bfloat16 not supported by glslc
--- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+-- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
 -- Including Vulkan backend
 -- ggml version: 0.9.5
 -- ggml commit:  0b51e792e-dirty
 -- Configuring incomplete, errors occurred!
-See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
-See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
+See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
+See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
 
 C++ build system [configure] failed while executing:
     /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
-      -H/opt/UnitySrc/personal/ocs-test/llama_dart/android \
+      -H/opt/UnitySrc/personal/ocs-test/llamadart/android \
       -DCMAKE_SYSTEM_NAME=Android \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -DCMAKE_SYSTEM_VERSION=21 \
@@ -481,28 +481,28 @@ C++ build system [configure] failed while executing:
       -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake \
       -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
       "-DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED" \
-      -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
-      -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+      -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+      -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
       -DCMAKE_BUILD_TYPE=Debug \
-      -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a \
+      -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a \
       -GNinja
-  from /opt/UnitySrc/personal/ocs-test/llama_dart/android
-CMake Warning at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/CMakeLists.txt:68 (message):
-  llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
+  from /opt/UnitySrc/personal/ocs-test/llamadart/android
+CMake Warning at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/CMakeLists.txt:68 (message):
+  llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
 
 
-CMake Error at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
+CMake Error at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
   Unknown CMake command "llama_add_compile_flags".
-C/C++: /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt profile|arm64-v8a : Writing build model to /opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/logs/arm64-v8a/build_model.json
+C/C++: /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt profile|arm64-v8a : Writing build model to /opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/logs/arm64-v8a/build_model.json
 Build 86ff479d-f925-4175-b7c4-072015e5e03c is closed
 
-[Incubating] Problems report is available at: file:///opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/reports/problems/problems-report.html
+[Incubating] Problems report is available at: file:///opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/reports/problems/problems-report.html
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
-> [CXX1429] error when building with cmake using /opt/UnitySrc/personal/ocs-test/llama_dart/android/CMakeLists.txt: -- The C compiler identification is Clang 21.0.0
+Execution failed for task ':llamadart:configureCMakeDebug[arm64-v8a]'.
+> [CXX1429] error when building with cmake using /opt/UnitySrc/personal/ocs-test/llamadart/android/CMakeLists.txt: -- The C compiler identification is Clang 21.0.0
   -- The CXX compiler identification is Clang 21.0.0
   -- Detecting C compiler ABI info
   -- Detecting C compiler ABI info - done
@@ -514,20 +514,20 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
   -- Check for working CXX compiler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ - skipped
   -- Detecting CXX compile features
   -- Detecting CXX compile features - done
-  -- llama_dart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
-  -- llama_dart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
-  -- llama_dart: Vulkan backend ENABLED for Android
-  -- llama_dart: GGML_VULKAN initial state: ON
-  -- llama_dart: ANDROID state: 1
-  -- llama_dart: CMAKE_SYSTEM_NAME: Android
-  -- llama_dart: GLOBAL GGML_USE_VULKAN applied
-  -- llama_dart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
-  -- llama_dart: Creating manual Vulkan::Vulkan target for ggml compatibility
-  -- llama_dart: Vulkan::Vulkan mapped to vulkan
-  -- llama_dart: Generating host toolchain for Vulkan shader compiler...
-  -- llama_dart: Added /opt/UnitySrc/personal/ocs-test/llama_dart/src/native to PATH (for ninja shim)
-  -- llama_dart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
-  -- llama_dart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+  -- llamadart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
+  -- llamadart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
+  -- llamadart: Vulkan backend ENABLED for Android
+  -- llamadart: GGML_VULKAN initial state: ON
+  -- llamadart: ANDROID state: 1
+  -- llamadart: CMAKE_SYSTEM_NAME: Android
+  -- llamadart: GLOBAL GGML_USE_VULKAN applied
+  -- llamadart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
+  -- llamadart: Creating manual Vulkan::Vulkan target for ggml compatibility
+  -- llamadart: Vulkan::Vulkan mapped to vulkan
+  -- llamadart: Generating host toolchain for Vulkan shader compiler...
+  -- llamadart: Added /opt/UnitySrc/personal/ocs-test/llamadart/src/native to PATH (for ninja shim)
+  -- llamadart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
+  -- llamadart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
   -- The ASM compiler identification is Clang with GNU-like command-line
   -- Found assembler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang
   -- Setting GGML_NATIVE_DEFAULT to OFF
@@ -568,17 +568,17 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
   -- GL_NV_cooperative_matrix2 not supported by glslc
   -- GL_EXT_integer_dot_product not supported by glslc
   -- GL_EXT_bfloat16 not supported by glslc
-  -- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+  -- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
   -- Including Vulkan backend
   -- ggml version: 0.9.5
   -- ggml commit:  0b51e792e-dirty
   -- Configuring incomplete, errors occurred!
-  See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
-  See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
+  See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
+  See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
   
   C++ build system [configure] failed while executing:
       /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
-        -H/opt/UnitySrc/personal/ocs-test/llama_dart/android \
+        -H/opt/UnitySrc/personal/ocs-test/llamadart/android \
         -DCMAKE_SYSTEM_NAME=Android \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_SYSTEM_VERSION=21 \
@@ -590,17 +590,17 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
         -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake \
         -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
         "-DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED" \
-        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
         -DCMAKE_BUILD_TYPE=Debug \
-        -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a \
+        -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a \
         -GNinja
-    from /opt/UnitySrc/personal/ocs-test/llama_dart/android
-  CMake Warning at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/CMakeLists.txt:68 (message):
-    llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
+    from /opt/UnitySrc/personal/ocs-test/llamadart/android
+  CMake Warning at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/CMakeLists.txt:68 (message):
+    llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
   
   
-  CMake Error at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
+  CMake Error at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
     Unknown CMake command "llama_add_compile_flags". : com.android.ide.common.process.ProcessException: -- The C compiler identification is Clang 21.0.0
   -- The CXX compiler identification is Clang 21.0.0
   -- Detecting C compiler ABI info
@@ -613,20 +613,20 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
   -- Check for working CXX compiler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ - skipped
   -- Detecting CXX compile features
   -- Detecting CXX compile features - done
-  -- llama_dart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
-  -- llama_dart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
-  -- llama_dart: Vulkan backend ENABLED for Android
-  -- llama_dart: GGML_VULKAN initial state: ON
-  -- llama_dart: ANDROID state: 1
-  -- llama_dart: CMAKE_SYSTEM_NAME: Android
-  -- llama_dart: GLOBAL GGML_USE_VULKAN applied
-  -- llama_dart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
-  -- llama_dart: Creating manual Vulkan::Vulkan target for ggml compatibility
-  -- llama_dart: Vulkan::Vulkan mapped to vulkan
-  -- llama_dart: Generating host toolchain for Vulkan shader compiler...
-  -- llama_dart: Added /opt/UnitySrc/personal/ocs-test/llama_dart/src/native to PATH (for ninja shim)
-  -- llama_dart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
-  -- llama_dart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+  -- llamadart: Found NDK glslc at /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/shader-tools/darwin-x86_64/glslc
+  -- llamadart: Validating NDK Vulkan lib failed, falling back to 'vulkan'
+  -- llamadart: Vulkan backend ENABLED for Android
+  -- llamadart: GGML_VULKAN initial state: ON
+  -- llamadart: ANDROID state: 1
+  -- llamadart: CMAKE_SYSTEM_NAME: Android
+  -- llamadart: GLOBAL GGML_USE_VULKAN applied
+  -- llamadart: Vulkan enabled by parent/platform (Android detected). Configuring definitions...
+  -- llamadart: Creating manual Vulkan::Vulkan target for ggml compatibility
+  -- llamadart: Vulkan::Vulkan mapped to vulkan
+  -- llamadart: Generating host toolchain for Vulkan shader compiler...
+  -- llamadart: Added /opt/UnitySrc/personal/ocs-test/llamadart/src/native to PATH (for ninja shim)
+  -- llamadart: CMAKE_MAKE_PROGRAM is /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja
+  -- llamadart: Using generated host toolchain (cached): /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
   -- The ASM compiler identification is Clang with GNU-like command-line
   -- Found assembler: /Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang
   -- Setting GGML_NATIVE_DEFAULT to OFF
@@ -667,17 +667,17 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
   -- GL_NV_cooperative_matrix2 not supported by glslc
   -- GL_EXT_integer_dot_product not supported by glslc
   -- GL_EXT_bfloat16 not supported by glslc
-  -- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
+  -- vulkan-shaders-gen toolchain file: /opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/android-host-toolchain.cmake
   -- Including Vulkan backend
   -- ggml version: 0.9.5
   -- ggml commit:  0b51e792e-dirty
   -- Configuring incomplete, errors occurred!
-  See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
-  See also "/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
+  See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeOutput.log".
+  See also "/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a/CMakeFiles/CMakeError.log".
   
   C++ build system [configure] failed while executing:
       /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake \
-        -H/opt/UnitySrc/personal/ocs-test/llama_dart/android \
+        -H/opt/UnitySrc/personal/ocs-test/llamadart/android \
         -DCMAKE_SYSTEM_NAME=Android \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_SYSTEM_VERSION=21 \
@@ -689,17 +689,17 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
         -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake \
         -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja \
         "-DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED" \
-        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a \
         -DCMAKE_BUILD_TYPE=Debug \
-        -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a \
+        -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a \
         -GNinja
-    from /opt/UnitySrc/personal/ocs-test/llama_dart/android
-  CMake Warning at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/CMakeLists.txt:68 (message):
-    llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
+    from /opt/UnitySrc/personal/ocs-test/llamadart/android
+  CMake Warning at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/CMakeLists.txt:68 (message):
+    llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
   
   
-  CMake Error at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
+  CMake Error at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/llama_cpp/src/CMakeLists.txt:1 (llama_add_compile_flags):
     Unknown CMake command "llama_add_compile_flags".
   	at com.android.build.gradle.internal.cxx.process.ExecuteProcessKt.execute(ExecuteProcess.kt:288)
   	at com.android.build.gradle.internal.cxx.process.ExecuteProcessKt$executeProcess$1.invoke(ExecuteProcess.kt:108)
@@ -873,7 +873,7 @@ Execution failed for task ':llama_dart:configureCMakeDebug[arm64-v8a]'.
   	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
   	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
   	at java.base/java.lang.Thread.run(Unknown Source)
-  Caused by: com.android.ide.common.process.ProcessException: Error while executing process /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake with arguments {-H/opt/UnitySrc/personal/ocs-test/llama_dart/android -DCMAKE_SYSTEM_NAME=Android -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_SYSTEM_VERSION=21 -DANDROID_PLATFORM=android-21 -DANDROID_ABI=arm64-v8a -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_ANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja -DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/llama_dart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_BUILD_TYPE=Debug -B/opt/UnitySrc/personal/ocs-test/llama_dart/android/.cxx/Debug/5y151y6m/arm64-v8a -GNinja}
+  Caused by: com.android.ide.common.process.ProcessException: Error while executing process /Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/cmake with arguments {-H/opt/UnitySrc/personal/ocs-test/llamadart/android -DCMAKE_SYSTEM_NAME=Android -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_SYSTEM_VERSION=21 -DANDROID_PLATFORM=android-21 -DANDROID_ABI=arm64-v8a -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_ANDROID_NDK=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865 -DCMAKE_TOOLCHAIN_FILE=/Users/jhin.lee/Library/Android/sdk/ndk/29.0.14206865/build/cmake/android.toolchain.cmake -DCMAKE_MAKE_PROGRAM=/Users/jhin.lee/Library/Android/sdk/cmake/3.22.1/bin/ninja -DCMAKE_CXX_FLAGS=-std=c++17 -DLLAMA_SHARED -DLLAMA_BUILD -Dposix_madvise=madvise -DPOSIX_MADV_NORMAL=MADV_NORMAL -DPOSIX_MADV_RANDOM=MADV_RANDOM -DPOSIX_MADV_SEQUENTIAL=MADV_SEQUENTIAL -DPOSIX_MADV_WILLNEED=MADV_WILLNEED -DPOSIX_MADV_DONTNEED=MADV_DONTNEED -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/llamadart/intermediates/cxx/Debug/5y151y6m/obj/arm64-v8a -DCMAKE_BUILD_TYPE=Debug -B/opt/UnitySrc/personal/ocs-test/llamadart/android/.cxx/Debug/5y151y6m/arm64-v8a -GNinja}
   	at com.android.build.gradle.internal.process.GradleProcessResult.buildProcessException(GradleProcessResult.java:73)
   	at com.android.build.gradle.internal.process.GradleProcessResult.assertNormalExitValue(GradleProcessResult.java:48)
   	at com.android.build.gradle.internal.cxx.process.ExecuteProcessKt.execute(ExecuteProcess.kt:277)
@@ -898,4 +898,4 @@ For more on this, please refer to https://docs.gradle.org/8.14/userguide/command
 
 BUILD FAILED in 2s
 5 actionable tasks: 1 executed, 4 up-to-date
-Watched directory hierarchies: [/Users/jhin.lee/development/flutter/packages/flutter_tools/gradle, /opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/android]
+Watched directory hierarchies: [/Users/jhin.lee/development/flutter/packages/flutter_tools/gradle, /opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/android]

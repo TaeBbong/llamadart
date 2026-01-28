@@ -1,5 +1,5 @@
-name: llama_dart_chat_example
-description: Chat interface example using llama_dart
+name: llamadart_chat_example
+description: Chat interface example using llamadart
 publish_to: 'none'
 version: 1.0.0
 

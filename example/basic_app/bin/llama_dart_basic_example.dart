@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:llama_dart/llama_dart.dart';
+import 'package:llamadart/llama_dart.dart';
 import 'package:llama_dart_basic_example/model_downloader.dart';
 import 'package:llama_dart_basic_example/inference_test.dart';
 

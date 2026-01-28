@@ -3,11 +3,11 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'package:web/web.dart';
 import 'dart:convert';
-import 'package:llama_dart/src/llama_service_interface.dart';
-import 'package:llama_dart/src/web/wllama_interop.dart';
+import 'package:llamadart/src/llama_service_interface.dart';
+import 'package:llamadart/src/web/wllama_interop.dart';
 
 // Export interface
-export 'package:llama_dart/src/llama_service_interface.dart';
+export 'package:llamadart/src/llama_service_interface.dart';
 
 /// Web implementation of [LlamaServiceBase] using wllama.
 class LlamaService implements LlamaServiceBase {

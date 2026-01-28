@@ -1,6 +1,6 @@
-# llama_dart Chat Example
+# llamadart Chat Example
 
-A Flutter chat application demonstrating real-world usage of llama_dart with UI.
+A Flutter chat application demonstrating real-world usage of llamadart with UI.
 
 ## Features
 
@@ -150,12 +150,12 @@ _(Add screenshots here when complete)_
 
 **App crashes on startup:**
 - Check console output for error messages
-- Verify llama_dart dependency is correctly configured
+- Verify llamadart dependency is correctly configured
 - Ensure Flutter version >= 3.10.0
 
 ## Tech Stack
 
-- **llama_dart** - LLM inference
+- **llamadart** - LLM inference
 - **Provider** - State management
 - **shared_preferences** - Settings persistence
 - **Material Design 3** - UI components

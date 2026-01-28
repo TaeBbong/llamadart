@@ -19,9 +19,9 @@
 > Task :flutter_plugin_android_lifecycle:preBuild UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:preDebugBuild UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:writeDebugAarMetadata UP-TO-DATE
-> Task :llama_dart:preBuild UP-TO-DATE
-> Task :llama_dart:preDebugBuild UP-TO-DATE
-> Task :llama_dart:writeDebugAarMetadata UP-TO-DATE
+> Task :llamadart:preBuild UP-TO-DATE
+> Task :llamadart:preDebugBuild UP-TO-DATE
+> Task :llamadart:writeDebugAarMetadata UP-TO-DATE
 > Task :path_provider_android:preBuild UP-TO-DATE
 > Task :path_provider_android:preDebugBuild UP-TO-DATE
 > Task :path_provider_android:writeDebugAarMetadata UP-TO-DATE
@@ -41,10 +41,10 @@
 > Task :flutter_plugin_android_lifecycle:compileDebugShaders NO-SOURCE
 > Task :flutter_plugin_android_lifecycle:generateDebugAssets UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:mergeDebugAssets UP-TO-DATE
-> Task :llama_dart:mergeDebugShaders UP-TO-DATE
-> Task :llama_dart:compileDebugShaders NO-SOURCE
-> Task :llama_dart:generateDebugAssets UP-TO-DATE
-> Task :llama_dart:mergeDebugAssets UP-TO-DATE
+> Task :llamadart:mergeDebugShaders UP-TO-DATE
+> Task :llamadart:compileDebugShaders NO-SOURCE
+> Task :llamadart:generateDebugAssets UP-TO-DATE
+> Task :llamadart:mergeDebugAssets UP-TO-DATE
 > Task :path_provider_android:mergeDebugShaders UP-TO-DATE
 > Task :path_provider_android:compileDebugShaders NO-SOURCE
 > Task :path_provider_android:generateDebugAssets UP-TO-DATE
@@ -62,9 +62,9 @@
 > Task :flutter_plugin_android_lifecycle:generateDebugResValues UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:generateDebugResources UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:packageDebugResources UP-TO-DATE
-> Task :llama_dart:generateDebugResValues UP-TO-DATE
-> Task :llama_dart:generateDebugResources UP-TO-DATE
-> Task :llama_dart:packageDebugResources UP-TO-DATE
+> Task :llamadart:generateDebugResValues UP-TO-DATE
+> Task :llamadart:generateDebugResources UP-TO-DATE
+> Task :llamadart:packageDebugResources UP-TO-DATE
 > Task :path_provider_android:generateDebugResValues UP-TO-DATE
 > Task :path_provider_android:generateDebugResources UP-TO-DATE
 > Task :path_provider_android:packageDebugResources UP-TO-DATE
@@ -82,8 +82,8 @@
 > Task :file_picker:processDebugManifest UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:extractDeepLinksDebug UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:processDebugManifest UP-TO-DATE
-> Task :llama_dart:extractDeepLinksDebug UP-TO-DATE
-> Task :llama_dart:processDebugManifest UP-TO-DATE
+> Task :llamadart:extractDeepLinksDebug UP-TO-DATE
+> Task :llamadart:processDebugManifest UP-TO-DATE
 > Task :path_provider_android:extractDeepLinksDebug UP-TO-DATE
 > Task :path_provider_android:processDebugManifest UP-TO-DATE
 > Task :shared_preferences_android:extractDeepLinksDebug UP-TO-DATE
@@ -98,9 +98,9 @@
 > Task :flutter_plugin_android_lifecycle:compileDebugLibraryResources UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:parseDebugLocalResources UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:generateDebugRFile UP-TO-DATE
-> Task :llama_dart:compileDebugLibraryResources UP-TO-DATE
-> Task :llama_dart:parseDebugLocalResources UP-TO-DATE
-> Task :llama_dart:generateDebugRFile UP-TO-DATE
+> Task :llamadart:compileDebugLibraryResources UP-TO-DATE
+> Task :llamadart:parseDebugLocalResources UP-TO-DATE
+> Task :llamadart:generateDebugRFile UP-TO-DATE
 > Task :path_provider_android:compileDebugLibraryResources UP-TO-DATE
 > Task :path_provider_android:parseDebugLocalResources UP-TO-DATE
 > Task :path_provider_android:generateDebugRFile UP-TO-DATE
@@ -114,12 +114,12 @@
 > Task :flutter_plugin_android_lifecycle:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :file_picker:compileDebugJavaWithJavac UP-TO-DATE
 > Task :file_picker:bundleLibCompileToJarDebug UP-TO-DATE
-> Task :llama_dart:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :llama_dart:compileDebugKotlin UP-TO-DATE
-> Task :llama_dart:javaPreCompileDebug UP-TO-DATE
-> Task :llama_dart:compileDebugJavaWithJavac NO-SOURCE
+> Task :llamadart:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :llamadart:compileDebugKotlin UP-TO-DATE
+> Task :llamadart:javaPreCompileDebug UP-TO-DATE
+> Task :llamadart:compileDebugJavaWithJavac NO-SOURCE
 > Task :path_provider_android:javaPreCompileDebug UP-TO-DATE
-> Task :llama_dart:bundleLibCompileToJarDebug
+> Task :llamadart:bundleLibCompileToJarDebug
 > Task :path_provider_android:compileDebugJavaWithJavac UP-TO-DATE
 > Task :path_provider_android:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :shared_preferences_android:checkKotlinGradlePluginConfigurationErrors SKIPPED
@@ -131,12 +131,12 @@
 > Task :file_picker:bundleLibRuntimeToJarDebug UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:bundleLibRuntimeToJarDebug UP-TO-DATE
 > Task :path_provider_android:bundleLibRuntimeToJarDebug UP-TO-DATE
-> Task :llama_dart:bundleLibRuntimeToJarDebug
+> Task :llamadart:bundleLibRuntimeToJarDebug
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
 > Task :file_picker:processDebugJavaRes NO-SOURCE
 > Task :flutter_plugin_android_lifecycle:processDebugJavaRes NO-SOURCE
 > Task :shared_preferences_android:bundleLibCompileToJarDebug
-> Task :llama_dart:processDebugJavaRes
+> Task :llamadart:processDebugJavaRes
 > Task :shared_preferences_android:bundleLibRuntimeToJarDebug
 > Task :path_provider_android:processDebugJavaRes NO-SOURCE
 > Task :shared_preferences_android:processDebugJavaRes
@@ -145,7 +145,7 @@
 > Task :file_picker:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :path_provider_android:bundleLibRuntimeToDirDebug UP-TO-DATE
-> Task :llama_dart:bundleLibRuntimeToDirDebug
+> Task :llamadart:bundleLibRuntimeToDirDebug
 > Task :app:configureCMakeDebug[arm64-v8a]
 > Task :app:buildCMakeDebug[arm64-v8a]
 > Task :app:configureCMakeDebug[armeabi-v7a]
@@ -159,13 +159,13 @@
 > Task :flutter_plugin_android_lifecycle:mergeDebugJniLibFolders UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:mergeDebugNativeLibs NO-SOURCE
 > Task :flutter_plugin_android_lifecycle:copyDebugJniLibsProjectOnly UP-TO-DATE
-> Task :llama_dart:preProfileBuild UP-TO-DATE
+> Task :llamadart:preProfileBuild UP-TO-DATE
 > Task :shared_preferences_android:bundleLibRuntimeToDirDebug
 > Task :app:compileDebugKotlin
 
-> Task :llama_dart:configureCMakeDebug[arm64-v8a]
-C/C++: CMake Warning at /opt/UnitySrc/personal/ocs-test/llama_dart/src/native/CMakeLists.txt:63 (message):
-C/C++:   llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
+> Task :llamadart:configureCMakeDebug[arm64-v8a]
+C/C++: CMake Warning at /opt/UnitySrc/personal/ocs-test/llamadart/src/native/CMakeLists.txt:63 (message):
+C/C++:   llamadart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
 
 > Task :app:compileDebugJavaWithJavac
 > Task :app:dexBuilderDebug
@@ -173,8 +173,8 @@ C/C++:   llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
 > Task :app:mergeDebugGlobalSynthetics
 > Task :app:mergeProjectDexDebug
 > Task :app:mergeDebugJavaResource
-> Task :llama_dart:buildCMakeDebug[arm64-v8a]
-> Task :llama_dart:mergeDebugJniLibFolders
+> Task :llamadart:buildCMakeDebug[arm64-v8a]
+> Task :llamadart:mergeDebugJniLibFolders
 > Task :path_provider_android:mergeDebugJniLibFolders
 > Task :path_provider_android:mergeDebugNativeLibs NO-SOURCE
 > Task :path_provider_android:copyDebugJniLibsProjectOnly
@@ -206,21 +206,21 @@ C/C++:   llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
 > Task :flutter_plugin_android_lifecycle:prepareDebugArtProfile UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:prepareLintJarForPublish UP-TO-DATE
 > Task :flutter_plugin_android_lifecycle:mergeDebugJavaResource
-> Task :llama_dart:extractDebugAnnotations
+> Task :llamadart:extractDebugAnnotations
 > Task :flutter_plugin_android_lifecycle:syncDebugLibJars
 > Task :flutter_plugin_android_lifecycle:bundleDebugAar
 > Task :flutter_plugin_android_lifecycle:assembleDebug
-> Task :llama_dart:extractDeepLinksForAarDebug UP-TO-DATE
-> Task :llama_dart:mergeDebugGeneratedProguardFiles UP-TO-DATE
-> Task :llama_dart:mergeDebugConsumerProguardFiles UP-TO-DATE
-> Task :llama_dart:mergeDebugNativeLibs
-> Task :llama_dart:prepareDebugArtProfile UP-TO-DATE
-> Task :llama_dart:prepareLintJarForPublish UP-TO-DATE
+> Task :llamadart:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :llamadart:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :llamadart:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :llamadart:mergeDebugNativeLibs
+> Task :llamadart:prepareDebugArtProfile UP-TO-DATE
+> Task :llamadart:prepareLintJarForPublish UP-TO-DATE
 > Task :path_provider_android:stripDebugDebugSymbols NO-SOURCE
 > Task :path_provider_android:copyDebugJniLibsProjectAndLocalJars
-> Task :llama_dart:mergeDebugJavaResource
+> Task :llamadart:mergeDebugJavaResource
 > Task :path_provider_android:extractDebugAnnotations
-> Task :llama_dart:syncDebugLibJars
+> Task :llamadart:syncDebugLibJars
 > Task :path_provider_android:extractDeepLinksForAarDebug UP-TO-DATE
 > Task :path_provider_android:mergeDebugGeneratedProguardFiles UP-TO-DATE
 > Task :path_provider_android:mergeDebugConsumerProguardFiles UP-TO-DATE
@@ -242,18 +242,18 @@ C/C++:   llama_dart: Vulkan backend ENABLED (Setting GGML_USE_VULKAN globally)
 > Task :shared_preferences_android:syncDebugLibJars
 > Task :shared_preferences_android:bundleDebugAar
 > Task :shared_preferences_android:assembleDebug
-> Task :llama_dart:stripDebugDebugSymbols
-> Task :llama_dart:copyDebugJniLibsProjectOnly
-> Task :llama_dart:copyDebugJniLibsProjectAndLocalJars
-> Task :llama_dart:bundleDebugAar
-> Task :llama_dart:assembleDebug
+> Task :llamadart:stripDebugDebugSymbols
+> Task :llamadart:copyDebugJniLibsProjectOnly
+> Task :llamadart:copyDebugJniLibsProjectAndLocalJars
+> Task :llamadart:bundleDebugAar
+> Task :llamadart:assembleDebug
 > Task :app:mergeDebugNativeLibs
 > Task :app:stripDebugDebugSymbols
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
 
-[Incubating] Problems report is available at: file:///opt/UnitySrc/personal/ocs-test/llama_dart/example/chat_app/build/reports/problems/problems-report.html
+[Incubating] Problems report is available at: file:///opt/UnitySrc/personal/ocs-test/llamadart/example/chat_app/build/reports/problems/problems-report.html
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
