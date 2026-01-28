@@ -1,0 +1,132 @@
+import 'dart:ffi';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'generated/llama_bindings.dart';
+
+/// Loads the llama.cpp native library
+LlamaCpp loadLlamaLib() {
+  late DynamicLibrary lib;
+
+  if (Platform.isMacOS) {
+    // For local testing (Dart standalone), look in the build directory
+    // This assumes we are running from the project root
+    final localBuildPath =
+        path.join(Directory.current.path, 'build/bin/libllama_cpp.dylib');
+    final devBuildPath = path.join(Directory.current.path,
+        '../../src/native/build/bin/libllama_cpp.dylib');
+    final frameworksPath = path.join(
+        Directory.current.path, 'macos/Frameworks/libllama_cpp.dylib');
+
+    if (File(localBuildPath).existsSync()) {
+      lib = DynamicLibrary.open(localBuildPath);
+    } else if (File(devBuildPath).existsSync()) {
+      lib = DynamicLibrary.open(devBuildPath);
+    } else if (File(frameworksPath).existsSync()) {
+      lib = DynamicLibrary.open(frameworksPath);
+    } else {
+      // Fallback for Flutter apps
+      try {
+        print('llama_dart: Attempting simple open libllama_cpp.dylib');
+        lib = DynamicLibrary.open('libllama_cpp.dylib');
+      } catch (e) {
+        try {
+          final executableDir = path.dirname(Platform.resolvedExecutable);
+          final libPath = path.canonicalize(path.join(
+              executableDir, '..', 'Frameworks', 'libllama_cpp.dylib'));
+          print('llama_dart: Attempting absolute bundle path: $libPath');
+          lib = DynamicLibrary.open(libPath);
+        } catch (_) {
+          try {
+            final executableDir = path.dirname(Platform.resolvedExecutable);
+            final libPath = path.join(executableDir, '..', 'Frameworks',
+                'llama_dart.framework', 'Resources', 'libllama_cpp.dylib');
+            print('llama_dart: Attempting framework resources path: $libPath');
+            lib = DynamicLibrary.open(libPath);
+          } catch (__) {
+            print(
+                'llama_dart: Falling back to process handle (Static Linking)');
+            lib = DynamicLibrary.process();
+          }
+        }
+      }
+    }
+  } else if (Platform.isLinux) {
+    final localBuildPath =
+        path.join(Directory.current.path, 'build/bin/libllama_cpp.so');
+    final devBuildPath = path.join(
+        Directory.current.path, '../../src/native/build/bin/libllama_cpp.so');
+    if (File(localBuildPath).existsSync()) {
+      lib = DynamicLibrary.open(localBuildPath);
+    } else if (File(devBuildPath).existsSync()) {
+      lib = DynamicLibrary.open(devBuildPath);
+    } else {
+      lib = DynamicLibrary.open('libllama_cpp.so');
+    }
+  } else if (Platform.isWindows) {
+    final localBuildPath =
+        path.join(Directory.current.path, 'build/bin/llama_cpp.dll');
+    if (File(localBuildPath).existsSync()) {
+      lib = DynamicLibrary.open(localBuildPath);
+    } else {
+      lib = DynamicLibrary.open('llama_cpp.dll');
+    }
+  } else if (Platform.isIOS) {
+    try {
+      print(
+          'llama_dart: Attempting to load from llama_cpp.framework/llama_cpp');
+      lib = DynamicLibrary.open('llama_cpp.framework/llama_cpp');
+      print('llama_dart: Loaded successfully.');
+    } catch (e1) {
+      print('llama_dart: Failed to load from framework bundle: $e1');
+      try {
+        // Construct absolute path
+        final executableDir = path.dirname(Platform.resolvedExecutable);
+        final libPath = path.join(
+            executableDir, 'Frameworks/llama_cpp.framework/llama_cpp');
+        print('llama_dart: Attempting load from $libPath');
+        lib = DynamicLibrary.open(libPath);
+        print('llama_dart: Loaded successfully from absolute path.');
+      } catch (e2) {
+        print('llama_dart: Failed to load absolute path: $e2');
+        try {
+          print(
+              'llama_dart: Attempting process() fallback (for static linking)');
+          lib = DynamicLibrary.process();
+
+          // Verify that we can actually find a symbol.
+          // If strict stripping is enabled, process() returns a handle but lookup fails.
+          if (!lib.providesSymbol('llama_backend_init')) {
+            throw Exception('llama_backend_init symbol not found in process(). '
+                'This indicates symbols were stripped or not exported. '
+                'Check STRIP_STYLE and -Wl,-export_dynamic in Podspec.');
+          }
+          print('llama_dart: Loaded process() and verified symbols.');
+        } catch (e3) {
+          print('llama_dart: Failed process() fallback: $e3');
+          rethrow;
+        }
+      }
+    }
+  } else if (Platform.isAndroid) {
+    // For Android, we simply open the shared library by name.
+    // Flutter will have packaged it into the APK.
+    try {
+      lib = DynamicLibrary.open('libllama_cpp.so');
+    } catch (e) {
+      print('llama_dart: Failed to load libllama_cpp.so on Android: $e');
+      rethrow;
+    }
+  } else {
+    throw UnsupportedError('Unknown platform: ${Platform.operatingSystem}');
+  }
+
+  llamaLib = lib;
+  return LlamaCpp(lib);
+}
+
+// Global instance for easy access
+/// Global instance of the Llama bindings.
+final LlamaCpp llama = loadLlamaLib();
+
+/// The underlying DynamicLibrary, exposed for NativeFinalizer access.
+late final DynamicLibrary llamaLib;

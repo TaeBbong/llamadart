@@ -1,0 +1,16 @@
+name: llama_dart_basic_example
+description: A basic example of using llama_dart package
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  llama_dart:
+    path: ../..  # Use local version for testing
+  http: ^1.6.0
+  path: ^1.8.3
+
+dev_dependencies:
+  lints: ^3.0.0
