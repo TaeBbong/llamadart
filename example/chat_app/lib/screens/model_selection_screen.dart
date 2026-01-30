@@ -203,7 +203,7 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       ),
       body: ListView.separated(
         itemCount: _models.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, _) => const SizedBox(height: 16),
         padding: const EdgeInsets.all(24),
         itemBuilder: (context, index) {
           final model = _models[index];
