@@ -22,6 +22,24 @@ enum GpuBackend {
   blas,
 }
 
+/// Log level for llama.cpp.
+enum LlamaLogLevel {
+  /// No logging.
+  none,
+
+  /// Debug information.
+  debug,
+
+  /// General information.
+  info,
+
+  /// Warnings.
+  warn,
+
+  /// Errors only.
+  error,
+}
+
 /// Configuration parameters for loading the model.
 class ModelParams {
   /// Context size (n_ctx). Defaults to 2048.
@@ -35,11 +53,15 @@ class ModelParams {
   /// Defaults to [GpuBackend.auto] which selects the best available.
   final GpuBackend preferredBackend;
 
+  /// Minimum log level to print. Defaults to [LlamaLogLevel.info].
+  final LlamaLogLevel logLevel;
+
   /// Creates configuration for the model.
   const ModelParams({
     this.contextSize = 0, // 0 = Auto detect from model
     this.gpuLayers = 99,
     this.preferredBackend = GpuBackend.auto,
+    this.logLevel = LlamaLogLevel.info,
   });
 
   /// Creates a copy of this [ModelParams] with updated fields.
@@ -47,11 +69,13 @@ class ModelParams {
     int? contextSize,
     int? gpuLayers,
     GpuBackend? preferredBackend,
+    LlamaLogLevel? logLevel,
   }) {
     return ModelParams(
       contextSize: contextSize ?? this.contextSize,
       gpuLayers: gpuLayers ?? this.gpuLayers,
       preferredBackend: preferredBackend ?? this.preferredBackend,
+      logLevel: logLevel ?? this.logLevel,
     );
   }
 }

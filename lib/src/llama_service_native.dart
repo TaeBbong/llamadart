@@ -466,6 +466,40 @@ class LlamaService implements LlamaServiceBase {
   }
 
   // --- Native Logging Callback ---
+  static LlamaLogLevel _currentLogLevel = LlamaLogLevel.warn;
+
+  static void _log(String message, {LlamaLogLevel level = LlamaLogLevel.info}) {
+    if (_currentLogLevel == LlamaLogLevel.none) return;
+    if (level.index >= _currentLogLevel.index) {
+      print(message);
+    }
+  }
+
+  static void _logCallback(
+    int level,
+    Pointer<Char> text,
+    Pointer<Void> userData,
+  ) {
+    if (_currentLogLevel == LlamaLogLevel.none) return;
+
+    final dartLevel = switch (level) {
+      0 => LlamaLogLevel.none,
+      1 => LlamaLogLevel.debug,
+      2 => LlamaLogLevel.info,
+      3 => LlamaLogLevel.warn,
+      4 => LlamaLogLevel.error,
+      5 => _currentLogLevel, // CONT (continue) - use current level
+      _ => LlamaLogLevel.info,
+    };
+
+    if (dartLevel.index >= _currentLogLevel.index) {
+      final msg = text.cast<Utf8>().toDartString();
+      // llama.cpp often sends partial lines, we just print them using stdout.write
+      // In Flutter, stdout.write might not always show up in the debug console,
+      // but print() does. However, partial lines are better handled by stdout.
+      stdout.write(msg);
+    }
+  }
 
   // --- Isolate Entry Point ---
   static void _isolateEntry(SendPort initialSendPort) {
@@ -474,7 +508,14 @@ class LlamaService implements LlamaServiceBase {
 
     final state = _LlamaState();
 
-    print("Isolate: Initializing Backend...");
+    // Register log callbacks
+    final logCallbackPtr = Pointer.fromFunction<ggml_log_callbackFunction>(
+      _logCallback,
+    );
+    llama_log_set(logCallbackPtr, nullptr);
+    ggml_log_set(logCallbackPtr, nullptr);
+
+    _log("Isolate: Initializing Backend...");
 
     // Set environment variable to disable residency sets on macOS 15+
     // This prevents a crash on exit due to an aggressive assertion in llama.cpp
@@ -491,24 +532,27 @@ class LlamaService implements LlamaServiceBase {
         setenv(name, value, 1);
         malloc.free(name);
         malloc.free(value);
-        print(
+        _log(
           "Isolate: Disabled Metal residency sets to prevent crash on exit.",
         );
       }
     } catch (e) {
-      print("Isolate: Failed to set environment variable: $e");
+      _log(
+        "Isolate: Failed to set environment variable: $e",
+        level: LlamaLogLevel.error,
+      );
     }
 
     // Initialize backend (native side) - Standard cpp backend init
     try {
       ggml_backend_load_all();
       llama_backend_init();
-      print("Isolate: Backends loaded.");
+      _log("Isolate: Backends loaded.");
     } catch (e) {
-      print("Isolate: Failed to load backends: $e");
+      _log("Isolate: Failed to load backends: $e", level: LlamaLogLevel.error);
     }
 
-    print("Isolate: Backend initialized.");
+    _log("Isolate: Backend initialized.");
 
     receivePort.listen((message) {
       if (message is _InitRequest) {
@@ -545,10 +589,11 @@ class LlamaService implements LlamaServiceBase {
     _LlamaState state,
   ) {
     try {
-      print("Isolate: InitRequest received for path: ${message.modelPath}");
+      _currentLogLevel = message.modelParams.logLevel;
+      _log("Isolate: InitRequest received for path: ${message.modelPath}");
 
       if (!File(message.modelPath).existsSync()) {
-        print("Isolate: File does not exist!");
+        _log("Isolate: File does not exist!");
         message.sendPort.send(
           _ErrorResponse("File not found at ${message.modelPath}"),
         );
@@ -556,7 +601,7 @@ class LlamaService implements LlamaServiceBase {
       }
 
       if (state.model != null) {
-        print("Isolate: Cleaning up previous model...");
+        _log("Isolate: Cleaning up previous model...");
         state.ctx?.dispose();
         state.model?.dispose();
         if (state.batch != null) {
@@ -576,7 +621,7 @@ class LlamaService implements LlamaServiceBase {
       modelParams.n_gpu_layers = message.modelParams.gpuLayers;
       modelParams.use_mmap = true;
 
-      print(
+      _log(
         "Isolate: Loading model with n_gpu_layers = ${modelParams.n_gpu_layers}",
       );
 
@@ -586,12 +631,12 @@ class LlamaService implements LlamaServiceBase {
       if (Platform.isIOS &&
           Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')) {
         if (message.modelParams.preferredBackend == GpuBackend.auto) {
-          print(
+          _log(
             "Isolate: iOS Simulator detected. Disabling Metal (n_gpu_layers=0) for stability.",
           );
           modelParams.n_gpu_layers = 0;
         } else if (message.modelParams.preferredBackend == GpuBackend.metal) {
-          print(
+          _log(
             "Isolate: iOS Simulator detected but Metal explicitly requested. Proceeding with caution.",
           );
         }
@@ -602,7 +647,7 @@ class LlamaService implements LlamaServiceBase {
       if (message.modelParams.preferredBackend != GpuBackend.auto) {
         if (message.modelParams.preferredBackend == GpuBackend.cpu ||
             message.modelParams.preferredBackend == GpuBackend.blas) {
-          print("Isolate: Forcing CPU only (n_gpu_layers = 0)");
+          _log("Isolate: Forcing CPU only (n_gpu_layers = 0)");
           modelParams.n_gpu_layers = 0;
           // We don't necessarily need to restrict 'devices' for CPU,
           // setting gpu layers to 0 is usually sufficient.
@@ -613,7 +658,7 @@ class LlamaService implements LlamaServiceBase {
           for (int i = 0; i < count; i++) {
             final name = NativeHelpers.getDeviceName(i);
             final desc = NativeHelpers.getDeviceDescription(i);
-            print("Isolate: Found device $i: $name ($desc)");
+            _log("Isolate: Found device $i: $name ($desc)");
 
             bool match = false;
             if (message.modelParams.preferredBackend == GpuBackend.vulkan &&
@@ -636,7 +681,7 @@ class LlamaService implements LlamaServiceBase {
           }
 
           if (foundIndex != null) {
-            print(
+            _log(
               "Isolate: Selecting device index $foundIndex for ${message.modelParams.preferredBackend}",
             );
             // specific device selection:
@@ -652,14 +697,15 @@ class LlamaService implements LlamaServiceBase {
             // Since our binding uses the typedef, we cast accordingly.
             modelParams.devices = devicesPtr.cast();
           } else {
-            print(
+            _log(
               "Isolate: Warning - Preferred backend ${message.modelParams.preferredBackend} requested but no matching device found. Falling back to auto.",
+              level: LlamaLogLevel.warn,
             );
           }
         }
       }
 
-      print("Isolate: Calling llama_model_load_from_file...");
+      _log("Isolate: Calling llama_model_load_from_file...");
       final modelPtr = llama_model_load_from_file(
         modelPathPtr.cast(),
         modelParams,
@@ -670,12 +716,12 @@ class LlamaService implements LlamaServiceBase {
       }
 
       if (modelPtr == nullptr) {
-        print("Isolate: Failed to load model.");
+        _log("Isolate: Failed to load model.", level: LlamaLogLevel.error);
         message.sendPort.send(_ErrorResponse("Failed to load model"));
         return;
       }
       state.model = _LlamaModelWrapper(modelPtr);
-      print("Isolate: Model loaded.");
+      _log("Isolate: Model loaded.");
 
       final ctxParams = llama_context_default_params();
 
@@ -683,11 +729,12 @@ class LlamaService implements LlamaServiceBase {
       int resolvedCtxSize = message.modelParams.contextSize;
       if (resolvedCtxSize <= 0) {
         resolvedCtxSize = llama_model_n_ctx_train(state.model!.pointer);
-        print("Isolate: Auto-detected context size: $resolvedCtxSize");
+        _log("Isolate: Auto-detected context size: $resolvedCtxSize");
         // Safety cap for mobile/simulator: 4096
         if (resolvedCtxSize > 4096) {
-          print(
+          _log(
             "Isolate: Capping auto-detected context size to 4096 for stability.",
+            level: LlamaLogLevel.warn,
           );
           resolvedCtxSize = 4096;
         }
@@ -696,18 +743,18 @@ class LlamaService implements LlamaServiceBase {
       ctxParams.n_batch = resolvedCtxSize;
       ctxParams.n_ubatch = resolvedCtxSize;
 
-      print(
+      _log(
         "Isolate: Context params set (n_ctx=$resolvedCtxSize). Creating context...",
       );
       final ctxPtr = llama_init_from_model(state.model!.pointer, ctxParams);
 
       if (ctxPtr == nullptr) {
-        print("Isolate: Failed to create context.");
+        _log("Isolate: Failed to create context.", level: LlamaLogLevel.error);
         message.sendPort.send(_ErrorResponse("Failed to create context"));
         return;
       }
       state.ctx = _LlamaContextWrapper(ctxPtr, state.model!);
-      print("Isolate: Context created.");
+      _log("Isolate: Context created.");
 
       // Store params with resolved context size
       state.lastModelParams = message.modelParams.copyWith(
@@ -727,11 +774,11 @@ class LlamaService implements LlamaServiceBase {
       // Initialize Batch
       state.batch = llama_batch_init(resolvedCtxSize, 0, 1);
 
-      print("Isolate: Init complete.");
+      _log("Isolate: Init complete.");
       message.sendPort.send(_DoneResponse());
     } catch (e, stack) {
-      print("Isolate: Error during init: $e");
-      print(stack);
+      _log("Isolate: Error during init: $e", level: LlamaLogLevel.error);
+      _log(stack.toString(), level: LlamaLogLevel.error);
       message.sendPort.send(_ErrorResponse(e.toString()));
     }
   }
@@ -800,7 +847,7 @@ class LlamaService implements LlamaServiceBase {
 
     state.batch = llama_batch_init(ctxParams.n_ctx, 0, 1);
 
-    print(
+    _log(
       "Isolate: Generating for prompt: ${message.prompt.substring(0, min(100, message.prompt.length))}...",
     );
 
@@ -925,14 +972,14 @@ class LlamaService implements LlamaServiceBase {
 
         // Check cancellation
         if (cancelToken.value == 1) {
-          print("Isolate: Generation cancelled.");
+          _log("Isolate: Generation cancelled.");
           break; // Exit loop, will send Done
         }
       }
 
       message.sendPort.send(_DoneResponse());
     } catch (e, stack) {
-      print("Isolate: Error during generate: $e");
+      _log("Isolate: Error during generate: $e");
       print(stack);
       message.sendPort.send(_ErrorResponse(e.toString()));
     } finally {
@@ -1119,10 +1166,10 @@ class LlamaService implements LlamaServiceBase {
           "Isolate: Using template from metadata (length: ${templateStr.length})",
         );
       } else {
-        print("Isolate: Template metadata NOT found. Using native fallback.");
+        _log("Isolate: Template metadata NOT found. Using native fallback.");
       }
 
-      print("Isolate: Applying template to $nMsgs messages:");
+      _log("Isolate: Applying template to $nMsgs messages:");
       for (int i = 0; i < nMsgs; i++) {
         print(
           "  [$i] role: ${message.messages[i].role}, content length: ${message.messages[i].content.length}",
@@ -1318,9 +1365,10 @@ class LlamaService implements LlamaServiceBase {
     _DisposeRequest message,
     _LlamaState state,
   ) {
-    print("Isolate: Disposing...");
-    // Unregister log callback
+    _log("Isolate: Disposing...");
+    // Unregister log callbacks
     llama_log_set(nullptr, nullptr);
+    ggml_log_set(nullptr, nullptr);
 
     if (state.batch != null) {
       llama_batch_free(state.batch!);
@@ -1341,10 +1389,10 @@ class LlamaService implements LlamaServiceBase {
     try {
       llama_backend_free();
     } catch (e) {
-      print("Isolate: Error during llama_backend_free: $e");
+      _log("Isolate: Error during llama_backend_free: $e");
     }
 
-    print("Isolate: Disposed.");
+    _log("Isolate: Disposed.");
     message.sendPort.send(null);
     receivePort.close();
     Isolate.exit();

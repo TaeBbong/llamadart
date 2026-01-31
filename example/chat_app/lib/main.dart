@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'chat_screen.dart';
-import 'models/chat_model.dart';
+import 'screens/chat_screen.dart';
+import 'providers/chat_provider.dart';
 
 void main() {
   runApp(const MyApp());
