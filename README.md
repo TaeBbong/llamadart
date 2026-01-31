@@ -26,7 +26,7 @@
 | **macOS** | arm64, x86_64 | Metal | ✅ Tested (CPU, Metal) |
 | **iOS** | arm64 (Device), x86_64 (Sim) | Metal (Device), CPU (Sim) | ✅ Tested (CPU, Metal) |
 | **Android** | arm64-v8a, x86_64 | Vulkan | ✅ Tested (CPU, Vulkan) |
-| **Linux** | arm64, x86_64 | Vulkan | ✅ Tested (CPU, Vulkan) |
+| **Linux** | arm64, x86_64 | Vulkan | ⚠️ Tested (CPU Verified, Vulkan Untested) |
 | **Windows** | x64 | Vulkan | ✅ Tested (CPU, Vulkan) |
 | **Web** | WASM | CPU | ✅ Tested (WASM) |
 
