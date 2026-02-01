@@ -198,22 +198,29 @@ function Get-CMake {
     return $null
 }
 
-# Helper to find ccache
-function Get-Ccache {
+# Helper to find sccache (preferred on Windows) or ccache
+function Get-CompilerCache {
+    # Prefer sccache on Windows (better MSVC support)
+    $SccacheCmd = Get-Command "sccache" -ErrorAction SilentlyContinue
+    if ($SccacheCmd) {
+        return @{ Exe = "sccache"; Name = "sccache" }
+    }
+    
+    # Fallback to ccache
     $CcacheCmd = Get-Command "ccache" -ErrorAction SilentlyContinue
     if ($CcacheCmd) {
-        return "ccache"
+        return @{ Exe = "ccache"; Name = "ccache" }
     }
     return $null
 }
 
-$CcacheExe = Get-Ccache
-if ($CcacheExe) {
-    Write-Host "Found ccache: $CcacheExe"
-    $CmakeArgs += "-DCMAKE_C_COMPILER_LAUNCHER=$CcacheExe"
-    $CmakeArgs += "-DCMAKE_CXX_COMPILER_LAUNCHER=$CcacheExe"
+$CompilerCache = Get-CompilerCache
+if ($CompilerCache) {
+    Write-Host "Found $($CompilerCache.Name): $($CompilerCache.Exe)"
+    $CmakeArgs += "-DCMAKE_C_COMPILER_LAUNCHER=$($CompilerCache.Exe)"
+    $CmakeArgs += "-DCMAKE_CXX_COMPILER_LAUNCHER=$($CompilerCache.Exe)"
 } else {
-    Write-Warning "ccache not found. Build will not be cached."
+    Write-Warning "No compiler cache (sccache/ccache) found. Build will not be cached."
 }
 
 $CmakeExe = Get-CMake

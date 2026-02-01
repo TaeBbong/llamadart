@@ -161,12 +161,13 @@ jobs:
           TAG="${{ needs.resolve-tag.outputs.tag }}"
           git clone --depth 1 --branch $TAG https://github.com/ggml-org/llama.cpp.git llama_cpp
           git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git Vulkan-Headers
-      - name: Install dependencies (ccache, ninja)
-        run: choco install ccache ninja -y
-      - name: ccache
-        uses: ggml-org/ccache-action@v1.2.16
-        with:
-          key: windows-vulkan
+      - name: Install Ninja
+        run: choco install ninja -y
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Configure sccache environment
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $env:GITHUB_ENV
       - name: Install Vulkan SDK
         run: |
           $ver = "1.4.313.2"
