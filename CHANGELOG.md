@@ -5,6 +5,15 @@
 *   **Web & Context Stability**:
     *   Resolved "Max Tokens is 0" on Web by implementing `getLoadedContextInfo()` and robust GGUF metadata fallback in `LlamaEngine`.
     *   Improved numeric metadata extraction on Web for better compatibility with varied GGUF exporters.
+*   **GBNF Grammar Stability**:
+    *   Resolved "Unexpected empty grammar stack" crash by reordering the sampler chain (filtering tokens via GBNF *before* performing probability-based sampling).
+*   **Test Suite Overhaul**:
+    *   Pivoted from mock-based unit tests to real-world integration tests using the actual `llama.cpp` native backend.
+    *   Ensured full verification of model loading, tokenization, text generation, and grammar constraints against physical models.
+    *   **Multi-Platform Configuration**: Introduced `dart_test.yaml` and `@TestOn` tags to enable seamless execution of all tests across VM and Chrome with a single `dart test` command.
+*   **Robust Log Silencing**:
+    *   Implemented FD-level redirection (`dup2` to `/dev/null`) for `LlamaLogLevel.none` on native platforms.
+    *   This provides a crash-free alternative to FFI-based log callbacks, which were unstable during low-level native initialization (e.g., Metal).
 *   **Project Hygiene**:
     *   Achieved 100% clean `dart analyze` across the core library and all example applications.
     *   Replaced legacy stubs in the chat application with a clean, interface-based `ModelService` architecture.
@@ -22,6 +31,17 @@
 *   **Moondream 2 & Phi-2 Optimization**: 
     *   Implemented a specialized `Question: / Answer:` chat template fallback for Moondream models.
     *   Added dynamic BOS token handling: Automatically disables BOS injection for models where BOS == EOS (like Moondream) to prevent immediate "End of Generation".
+*   **Chat API Consolidation**: 
+    *   Moved high-level `chat()` and `chatWithTools()` logic from `LlamaEngine` to `ChatSession`.
+    *   `LlamaEngine` is now a dedicated low-level orchestrator for model loading, tokenization, and raw inference.
+    *   Introduced `ChatSession.singleTurn()` and `ChatSession.singleTurnStream()` for stateless chat requests without manual history management.
+*   **Intelligent Tool Flow**:
+    *   **Optional Tool Calls**: Tools are no longer forced by default. The model now decides when to use a tool vs. responding directly based on context.
+    *   **Final Response Generation**: After a tool returns a result, the model now generates a natural language response (without grammar constraints) to interpret the result for the user.
+    *   **forceToolCall**: Added a session-level flag to re-enable strict grammar-constrained tool calls for smaller models (e.g., 0.5B - 1B).
+*   **App Stability & Resources**:
+    *   Fixed a crash in the Flutter chat app during close/restart by implementing and using an idempotent `dispose()` in `ChatService`.
+    *   Added Qwen 2.5 3B and 7B models to the download list with clear RAM/VRAM requirements for testing complex instruction following and tool use.
 *   **ChatSession Manager**: Introduced a new high-level `ChatSession` class to automatically manage conversation history and system prompts.
 *   **Context Window Management**: `ChatSession` now implements an automated sliding window to truncate history when the model's context limit is approached.
 *   **Windows Robustness**:

@@ -1,3 +1,7 @@
+@TestOn('vm')
+@Timeout(Duration(minutes: 5))
+library;
+
 import 'package:test/test.dart';
 import 'package:llamadart/llamadart.dart';
 import 'test_helper.dart';
@@ -18,7 +22,10 @@ void main() {
 
     test('Multimodal initialization and property checks', () async {
       final modelFile = await TestHelper.getTestModel();
-      await engine.loadModel(modelFile.path);
+      await engine.loadModel(
+        modelFile.path,
+        modelParams: const ModelParams(logLevel: LlamaLogLevel.none),
+      );
 
       // We don't have a real mmproj file in the test assets,
       // but we can verify that the method exists and handles invalid paths.

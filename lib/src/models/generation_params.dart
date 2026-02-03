@@ -1,4 +1,18 @@
 /// Parameters controlling the token sampling and generation process.
+///
+/// Use [GenerationParams] to fine-tune how the model generates text, including
+/// randomness (temperature), sampling constraints (Top-K/Top-P), and
+/// architectural limits (max tokens).
+///
+/// Example:
+/// ```dart
+/// final params = GenerationParams(
+///   temp: 0.7,
+///   maxTokens: 1024,
+///   stopSequences: ['User:', '\n\n'],
+///   grammar: 'root ::= "yes" | "no"', // Force binary response
+/// );
+/// ```
 class GenerationParams {
   /// Maximum number of new tokens to generate.
   final int maxTokens;
@@ -27,6 +41,12 @@ class GenerationParams {
   /// List of strings that, if generated, will immediately stop the generation process.
   final List<String> stopSequences;
 
+  /// GBNF grammar string for structured output (e.g., "root ::= \"hello\" | \"world\"").
+  final String? grammar;
+
+  /// Grammar start symbol. Defaults to "root".
+  final String grammarRoot;
+
   /// Creates generation parameters with default values.
   const GenerationParams({
     this.maxTokens = 512,
@@ -36,6 +56,8 @@ class GenerationParams {
     this.penalty = 1.1,
     this.seed,
     this.stopSequences = const [],
+    this.grammar,
+    this.grammarRoot = 'root',
   });
 
   /// Creates a copy of this [GenerationParams] with updated fields.
@@ -47,6 +69,8 @@ class GenerationParams {
     double? penalty,
     int? seed,
     List<String>? stopSequences,
+    String? grammar,
+    String? grammarRoot,
   }) {
     return GenerationParams(
       maxTokens: maxTokens ?? this.maxTokens,
@@ -56,6 +80,8 @@ class GenerationParams {
       penalty: penalty ?? this.penalty,
       seed: seed ?? this.seed,
       stopSequences: stopSequences ?? this.stopSequences,
+      grammar: grammar ?? this.grammar,
+      grammarRoot: grammarRoot ?? this.grammarRoot,
     );
   }
 }
