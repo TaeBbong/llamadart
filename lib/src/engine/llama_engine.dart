@@ -10,6 +10,7 @@ import '../models/model_params.dart';
 import '../models/generation_params.dart';
 import '../models/llama_content_part.dart';
 import '../models/llama_chat_template_result.dart';
+import '../tools/tool_definition.dart';
 
 /// Low-level engine that orchestrates models and contexts.
 ///
@@ -196,6 +197,7 @@ class LlamaEngine {
   Future<LlamaChatTemplateResult> chatTemplate(
     List<LlamaChatMessage> messages, {
     bool addAssistant = true,
+    List<ToolDefinition>? tools,
   }) async {
     if (!_isReady || _templateProcessor == null) {
       throw LlamaContextException("Engine not ready.");
@@ -203,6 +205,7 @@ class LlamaEngine {
     final result = await _templateProcessor!.apply(
       messages,
       addAssistant: addAssistant,
+      tools: tools,
     );
     final tokens = await tokenize(result.prompt);
     return LlamaChatTemplateResult(
