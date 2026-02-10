@@ -94,49 +94,6 @@ class ToolRegistry {
     }).toList();
   }
 
-  /// Generates a system prompt describing all available tools.
-  ///
-  /// This helps the LLM understand which tools are available and how to use them.
-  String generateSystemPrompt() {
-    if (_tools.isEmpty) return '';
-
-    final buffer = StringBuffer();
-    buffer.writeln(
-      'You are a helpful assistant with access to the following tools:',
-    );
-    buffer.writeln();
-
-    for (final tool in _tools.values) {
-      buffer.writeln('### ${tool.name}');
-      buffer.writeln(tool.description);
-
-      if (tool.parameters.isNotEmpty) {
-        buffer.writeln('Parameters:');
-        for (final param in tool.parameters) {
-          final requiredStr = param.required ? ' (required)' : '';
-          final descStr = param.description != null
-              ? ' - ${param.description}'
-              : '';
-          buffer.writeln('  - ${param.name}$requiredStr$descStr');
-        }
-      }
-      buffer.writeln();
-    }
-
-    buffer.writeln('When you need to use a tool, respond ONLY with JSON:');
-    buffer.writeln(
-      '{"type": "function", "function": {"name": "<tool_name>", "parameters": {...}}}',
-    );
-    buffer.writeln();
-    buffer.writeln(
-      'Only use a tool when the user\'s request requires it. '
-      'For general conversation (greetings, questions you can answer directly, etc.), '
-      'respond normally without using tools.',
-    );
-
-    return buffer.toString();
-  }
-
   @override
   String toString() => 'ToolRegistry(${_tools.keys.join(', ')})';
 }
