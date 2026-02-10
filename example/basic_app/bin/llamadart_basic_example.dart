@@ -34,6 +34,14 @@ void main(List<String> arguments) async {
         abbr: 't',
         help: 'Enable a sample "get_weather" tool for testing tool calls.',
         defaultsTo: false)
+    ..addOption('tool-format',
+        abbr: 'f',
+        help: 'Tool call format: json, hermes, llama, mistral, auto',
+        defaultsTo: 'json')
+    ..addFlag('force-tool',
+        abbr: 'F',
+        help: 'Force the model to make a tool call using grammar.',
+        defaultsTo: false)
     ..addOption('temp',
         help: 'Generation temperature (default: 0.8)', defaultsTo: '0.8')
     ..addOption('top-k', help: 'Top-k sampling (default: 40)', defaultsTo: '40')
@@ -61,7 +69,18 @@ void main(List<String> arguments) async {
   final singlePrompt = results['prompt'] as String?;
   final grammar = results['grammar'] as String?;
   final enableToolTest = results['tool-test'] as bool;
+  final toolFormatStr = results['tool-format'] as String;
+  final forceToolCall = results['force-tool'] as bool;
   final isInteractive = results['interactive'] as bool && singlePrompt == null;
+
+  // Parse tool format
+  final toolCallFormat = switch (toolFormatStr.toLowerCase()) {
+    'hermes' => ToolCallFormat.hermes,
+    'llama' => ToolCallFormat.llama,
+    'mistral' => ToolCallFormat.mistral,
+    'auto' => ToolCallFormat.auto,
+    _ => ToolCallFormat.json,
+  };
 
   final modelService = ModelService();
   final llamaService = LlamaCliService();
@@ -110,12 +129,16 @@ void main(List<String> arguments) async {
       loras: loras,
       logLevel: enableLog ? LlamaLogLevel.info : LlamaLogLevel.none,
       toolRegistry: toolRegistry,
+      toolCallFormat: toolCallFormat,
+      forceToolCall: forceToolCall,
     );
     print('Model loaded successfully.\n');
 
     if (enableToolTest) {
-      print(
-          '🛠️ Tool test enabled. The model will be forced to use the "get_weather" tool.');
+      print('🛠️ Tool test enabled. Format: $toolFormatStr');
+      if (forceToolCall) {
+        print('   Force tool call: ON (grammar will be used)');
+      }
     }
 
     if (grammar != null) {

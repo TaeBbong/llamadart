@@ -12,12 +12,15 @@ class LlamaCliService {
 
   /// Initializes the engine with the given [modelPath].
   ///
-  /// Optionally provide [toolRegistry] to enable tool calling for this session.
+  /// Optionally provide [toolRegistry] to enable tool calling for this session,
+  /// and [toolCallFormat] to specify the format for tool calls.
   Future<void> init(
     String modelPath, {
     List<LoraAdapterConfig> loras = const [],
     LlamaLogLevel logLevel = LlamaLogLevel.none,
     ToolRegistry? toolRegistry,
+    ToolCallFormat toolCallFormat = ToolCallFormat.json,
+    bool forceToolCall = false,
   }) async {
     await _engine.loadModel(
       modelPath,
@@ -32,8 +35,13 @@ class LlamaCliService {
       await _engine.setLora(lora.path, scale: lora.scale);
     }
 
-    // Set up session with tool registry if provided
-    _session = ChatSession(_engine, toolRegistry: toolRegistry);
+    // Set up session with tool registry and format
+    _session = ChatSession(
+      _engine,
+      toolRegistry: toolRegistry,
+      toolCallFormat: toolCallFormat,
+      forceToolCall: forceToolCall,
+    );
   }
 
   /// Sets or updates the tool registry for this session.

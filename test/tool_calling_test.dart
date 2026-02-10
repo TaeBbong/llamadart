@@ -174,11 +174,15 @@ void main() {
   });
 
   group('ToolRegistry', () {
-    test('generateSystemPrompt includes tool definitions', () {
-      final prompt = registry.generateSystemPrompt();
-      expect(prompt, contains('get_weather'));
-      expect(prompt, contains('Get weather'));
-      expect(prompt, contains('location'));
+    test('toJsonSchemaList includes tool definitions', () {
+      final schemas = registry.toJsonSchemaList();
+      expect(schemas.length, 1);
+      expect(schemas.first['name'], 'get_weather');
+      expect(schemas.first['description'], 'Get weather');
+      expect(
+        (schemas.first['parameters'] as Map)['properties'],
+        containsPair('location', isA<Map>()),
+      );
     });
 
     test('invoke handles valid tool call', () async {

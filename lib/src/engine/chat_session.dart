@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
+
 import 'llama_engine.dart';
 import '../models/llama_chat_message.dart';
 import '../models/llama_chat_role.dart';
 import '../models/llama_content_part.dart';
 import '../models/generation_params.dart';
 import '../tools/tool_registry.dart';
-import '../common/json_schema_to_gbnf.dart';
+import '../tools/tool_call_format.dart';
+import '../tools/tool_call_format_config.dart';
 
 /// High-level chat interface with history management and tool support.
 ///
@@ -33,6 +34,9 @@ class ChatSession {
   final LlamaEngine _engine;
   final List<LlamaChatMessage> _history = [];
 
+  /// The format configuration for tool calling.
+  late final ToolCallFormatConfig _formatConfig;
+
   /// The maximum number of tokens allowed in the context window.
   ///
   /// If null, this value will be automatically retrieved from the engine's
@@ -42,8 +46,9 @@ class ChatSession {
   /// Creates a new [ChatSession] wrapping the given [engine].
   ///
   /// Optionally sets [maxContextTokens] to override the model's default limit,
-  /// [systemPrompt] to define the initial persona or instructions, and
-  /// [toolRegistry] to enable tool calling for this session.
+  /// [systemPrompt] to define the initial persona or instructions,
+  /// [toolRegistry] to enable tool calling for this session, and
+  /// [toolCallFormat] to specify the tool call format for the model.
   ChatSession(
     this._engine, {
     this.maxContextTokens,
@@ -51,7 +56,10 @@ class ChatSession {
     this.toolRegistry,
     this.forceToolCall = false,
     this.toolsEnabled = true,
-  });
+    this.toolCallFormat = ToolCallFormat.json,
+  }) {
+    _formatConfig = ToolCallFormatConfig(toolCallFormat);
+  }
 
   /// The underlying engine instance.
   LlamaEngine get engine => _engine;
@@ -86,6 +94,17 @@ class ChatSession {
   ///
   /// Defaults to `true`. If `false`, tools will not be used even if [toolRegistry] is set.
   bool toolsEnabled = true;
+
+  /// The format to use for tool calling.
+  ///
+  /// Different models use different formats for tool calls. Choose the format
+  /// that matches your model:
+  /// - [ToolCallFormat.json]: OpenAI-style JSON (default, most compatible)
+  /// - [ToolCallFormat.hermes]: Qwen 2.5, Qwen 3, Hermes models
+  /// - [ToolCallFormat.llama]: Llama 3.1+ models
+  /// - [ToolCallFormat.mistral]: Mistral/Mixtral models
+  /// - [ToolCallFormat.auto]: Try all formats (no grammar enforcement)
+  final ToolCallFormat toolCallFormat;
 
   /// Adds a custom [message] directly to the history.
   ///
@@ -133,15 +152,9 @@ class ChatSession {
     final effectiveRegistry = toolRegistryOverride ?? toolRegistry;
 
     // Ensure we are within context limits before sending
-    await _enforceContextLimit(
-      toolRegistry: effectiveRegistry,
-      toolsEnabled: toolsEnabled,
-    );
+    await _enforceContextLimit(toolRegistry: effectiveRegistry);
 
-    final messages = _getMessagesForEngine(
-      toolRegistry: effectiveRegistry,
-      toolsEnabled: toolsEnabled,
-    );
+    final messages = _getMessagesForEngine();
     String fullResponse = "";
 
     await for (final token in _generateWithMessages(
@@ -191,6 +204,7 @@ class ChatSession {
     ToolRegistry? toolRegistry,
     bool forceToolCall = false,
     bool toolsEnabled = true,
+    ToolCallFormat toolCallFormat = ToolCallFormat.json,
   }) async {
     final buffer = StringBuffer();
     await for (final token in singleTurnStream(
@@ -200,6 +214,7 @@ class ChatSession {
       toolRegistry: toolRegistry,
       forceToolCall: forceToolCall,
       toolsEnabled: toolsEnabled,
+      toolCallFormat: toolCallFormat,
     )) {
       buffer.write(token);
     }
@@ -214,13 +229,17 @@ class ChatSession {
     ToolRegistry? toolRegistry,
     bool forceToolCall = false,
     bool toolsEnabled = true,
+    ToolCallFormat toolCallFormat = ToolCallFormat.json,
   }) {
     // Create a temporary session just for processing
-    final tempSession = ChatSession(engine);
+    final tempSession = ChatSession(
+      engine,
+      toolCallFormat: toolCallFormat,
+      forceToolCall: forceToolCall,
+      toolsEnabled: toolsEnabled,
+    );
     final finalMessages = tempSession._getMessagesForEngine(
       history: messages,
-      toolRegistry: toolRegistry,
-      toolsEnabled: toolsEnabled,
     );
     return tempSession._generateWithMessages(
       finalMessages,
@@ -282,12 +301,10 @@ class ChatSession {
     bool forceToolCall = false,
     void Function(LlamaChatMessage message)? onMessageAdded,
   }) async* {
-    // Process grammar
+    // Process grammar based on format
     String? grammar;
-    if (forceToolCall) {
-      grammar = JsonSchemaToGbnf.generateToolGrammar(
-        registry.toJsonSchemaList(),
-      );
+    if (forceToolCall && _formatConfig.supportsGrammar) {
+      grammar = _formatConfig.generateGrammar(registry.tools);
     }
 
     var toolCallCount = 0;
@@ -295,7 +312,10 @@ class ChatSession {
 
     while (toolCallCount < maxToolCalls) {
       final buffer = StringBuffer();
-      final result = await _engine.chatTemplate(currentMessages);
+      final result = await _engine.chatTemplate(
+        currentMessages,
+        tools: registry.tools,
+      );
 
       // Use grammar only if forcing tool calls AND we haven't called any tools yet
       final useGrammar = forceToolCall && toolCallCount == 0;
@@ -308,6 +328,10 @@ class ChatSession {
       bool isLikelyToolCall = false;
       bool checkedType = false;
 
+      // For auto format, always buffer the entire output since models may
+      // output prose before the tool call JSON
+      final alwaysBuffer = toolCallFormat == ToolCallFormat.auto;
+
       await for (final token in _engine.generate(
         result.prompt,
         params: genParams,
@@ -315,10 +339,16 @@ class ChatSession {
       )) {
         buffer.write(token);
 
+        if (alwaysBuffer) {
+          // In auto mode, buffer everything and parse at the end
+          continue;
+        }
+
         if (!checkedType) {
           final trimmedSoFar = buffer.toString().trimLeft();
           if (trimmedSoFar.isNotEmpty) {
-            if (trimmedSoFar.startsWith('{')) {
+            // Check if output looks like any tool call format
+            if (_looksLikeToolCall(trimmedSoFar)) {
               isLikelyToolCall = true;
             } else {
               // Not a tool call, start streaming immediately
@@ -334,23 +364,34 @@ class ChatSession {
         }
       }
 
+      // For auto format, check if the buffered output contains a tool call
+      if (alwaysBuffer) {
+        final response = buffer.toString().trim();
+        final parseResult = _formatConfig.getParser().tryParse(response);
+        if (parseResult == null) {
+          // No tool call found, yield the entire response
+          yield response;
+          return;
+        }
+        // Tool call found, continue to process it below
+        isLikelyToolCall = true;
+      }
+
       if (!isLikelyToolCall) {
         return;
       }
 
       final response = buffer.toString().trim();
 
-      // Try to parse as tool call
-      if (_isToolCall(response)) {
+      // Try to parse as tool call using the format-specific parser
+      final parseResult = _formatConfig.getParser().tryParse(response);
+      if (parseResult != null) {
         try {
-          final json = jsonDecode(response) as Map;
-          final function = (json['function'] ?? json) as Map;
-          final name = function['name'] as String;
-          final args =
-              (function['parameters'] as Map?)?.cast<String, dynamic>() ?? {};
-
           // Invoke the tool
-          final toolResult = await registry.invoke(name, args);
+          final toolResult = await registry.invoke(
+            parseResult.name,
+            parseResult.arguments,
+          );
           toolCallCount++;
 
           // Create assistant message with tool call part
@@ -358,9 +399,10 @@ class ChatSession {
             role: LlamaChatRole.assistant,
             parts: [
               LlamaToolCallContent(
-                name: name,
-                arguments: args,
-                rawJson: response,
+                name: parseResult.name,
+                arguments: parseResult.arguments,
+                rawJson: parseResult.rawOutput,
+                id: parseResult.id,
               ),
             ],
           );
@@ -369,16 +411,25 @@ class ChatSession {
           onMessageAdded?.call(toolCallMsg);
 
           // Create tool message with result part
-          final toolResultMsg = LlamaChatMessage.multimodal(
-            role: LlamaChatRole.tool,
-            parts: [LlamaToolResultContent(name: name, result: toolResult)],
+          // Format the result according to the tool call format
+          final formattedResult = _formatConfig.formatToolResult(
+            parseResult.name,
+            toolResult,
+            callId: parseResult.id,
+          );
+          final toolResultMsg = LlamaChatMessage.text(
+            role: _formatConfig.toolResultRole,
+            content: formattedResult,
           );
           currentMessages.add(toolResultMsg);
           _history.add(toolResultMsg);
           onMessageAdded?.call(toolResultMsg);
 
           // Generate final response WITHOUT grammar (let model respond naturally)
-          final finalResult = await _engine.chatTemplate(currentMessages);
+          final finalResult = await _engine.chatTemplate(
+            currentMessages,
+            tools: registry.tools,
+          );
           final finalParams = (params ?? const GenerationParams()).copyWith(
             stopSequences: finalResult.stopSequences,
           );
@@ -391,7 +442,7 @@ class ChatSession {
           );
           return;
         } catch (e) {
-          // Parse failed - treat as normal response
+          // Tool invocation failed - treat as normal response
         }
       }
 
@@ -401,7 +452,10 @@ class ChatSession {
     }
 
     // Max tool calls reached, do one final generation without tools
-    final finalResult = await _engine.chatTemplate(currentMessages);
+    final finalResult = await _engine.chatTemplate(
+      currentMessages,
+      tools: registry.tools,
+    );
     final finalParams = params ?? const GenerationParams();
     yield* _engine.generate(
       finalResult.prompt,
@@ -410,38 +464,30 @@ class ChatSession {
     );
   }
 
-  /// Check if a response looks like a tool call.
-  bool _isToolCall(String response) {
-    final trimmed = response.trim();
-    if (!trimmed.startsWith('{')) return false;
+  /// Quick check if the output looks like any known tool call format.
+  ///
+  /// This is used for early detection during streaming to decide whether
+  /// to buffer the output or stream it directly.
+  bool _looksLikeToolCall(String output) {
+    final trimmed = output.trimLeft();
+    if (trimmed.isEmpty) return false;
 
-    try {
-      final json = jsonDecode(trimmed);
-      if (json is Map) {
-        // Standard OpenAI-like format (our grammar)
-        if (json['type'] == 'function' && json['function'] != null) return true;
-        // Simplified format common in some models
-        if (json.containsKey('function') &&
-            json['function'] is Map &&
-            (json['function'] as Map).containsKey('name')) {
-          return true;
-        }
-        // Direct format: {"name": "...", "parameters": {...}}
-        if (json.containsKey('name') && json.containsKey('parameters')) {
-          return true;
-        }
-      } else if (json is List && json.isNotEmpty) {
-        // Array of tool calls
-        final first = json.first;
-        if (first is Map &&
-            (first['type'] == 'function' || first.containsKey('function'))) {
-          return true;
-        }
-      }
-      return false;
-    } catch (_) {
-      return false;
-    }
+    // JSON-based formats (OpenAI, etc.)
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) return true;
+
+    // Hermes/Qwen format
+    if (trimmed.startsWith('<tool_call>')) return true;
+
+    // Qwen Coder / Llama 3.1 Func format
+    if (trimmed.startsWith('<function=')) return true;
+
+    // Llama 3.1 JSON format
+    if (trimmed.startsWith('<|python_tag|>')) return true;
+
+    // Mistral format
+    if (trimmed.startsWith('[TOOL_CALLS]')) return true;
+
+    return false;
   }
 
   /// Process multimodal messages to ensure media markers are present.
@@ -480,8 +526,6 @@ class ChatSession {
 
   List<LlamaChatMessage> _getMessagesForEngine({
     List<LlamaChatMessage>? history,
-    ToolRegistry? toolRegistry,
-    bool toolsEnabled = true,
   }) {
     final messages = <LlamaChatMessage>[];
     final sourceHistory = history ?? _history;
@@ -490,24 +534,13 @@ class ChatSession {
     final systemInHistory = sourceHistory
         .where((m) => m.role == LlamaChatRole.system)
         .firstOrNull;
-    String? baseSystemPrompt = systemInHistory?.content ?? systemPrompt;
+    final baseSystemPrompt = systemInHistory?.content ?? systemPrompt;
 
-    String? finalSystemPrompt = baseSystemPrompt;
-
-    if (toolsEnabled && toolRegistry != null && toolRegistry.isNotEmpty) {
-      final toolSystemPrompt = toolRegistry.generateSystemPrompt();
-      if (finalSystemPrompt != null && finalSystemPrompt.isNotEmpty) {
-        finalSystemPrompt = '${finalSystemPrompt.trim()}\n\n$toolSystemPrompt';
-      } else {
-        finalSystemPrompt = toolSystemPrompt;
-      }
-    }
-
-    if (finalSystemPrompt != null && finalSystemPrompt.isNotEmpty) {
+    if (baseSystemPrompt != null && baseSystemPrompt.isNotEmpty) {
       messages.add(
         LlamaChatMessage.text(
           role: LlamaChatRole.system,
-          content: finalSystemPrompt,
+          content: baseSystemPrompt,
         ),
       );
     }
@@ -520,7 +553,6 @@ class ChatSession {
   /// Truncates history if it exceeds the context limit.
   Future<void> _enforceContextLimit({
     ToolRegistry? toolRegistry,
-    bool toolsEnabled = true,
   }) async {
     final limit = maxContextTokens ?? await _engine.getContextSize();
     if (limit <= 0) return;
@@ -530,11 +562,11 @@ class ChatSession {
     final targetLimit = limit - reserve;
 
     while (_history.isNotEmpty) {
-      final messages = _getMessagesForEngine(
-        toolRegistry: toolRegistry,
-        toolsEnabled: toolsEnabled,
+      final messages = _getMessagesForEngine();
+      final template = await _engine.chatTemplate(
+        messages,
+        tools: toolRegistry?.tools,
       );
-      final template = await _engine.chatTemplate(messages);
 
       if (template.tokenCount != null && template.tokenCount! < targetLimit) {
         break;

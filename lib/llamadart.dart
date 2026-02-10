@@ -44,6 +44,11 @@ export 'src/tools/tool_param.dart';
 export 'src/tools/tool_params.dart';
 export 'src/tools/tool_definition.dart';
 export 'src/tools/tool_registry.dart';
+export 'src/tools/tool_call_format.dart';
+export 'src/tools/tool_call_format_config.dart';
+
+// Tool Call Parsers - Parsers for various LLM tool call formats
+export 'src/tools/parsers/parsers.dart';
 
 // Engine
 export 'src/engine/llama_engine.dart';
