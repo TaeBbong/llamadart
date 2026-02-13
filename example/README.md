@@ -38,6 +38,25 @@ flutter pub get
 flutter run
 ```
 
+## Testing
+
+- `basic_app` (Dart console):
+
+```bash
+cd basic_app
+dart test
+```
+
+- `chat_app` (Flutter UI):
+
+```bash
+cd chat_app
+flutter test
+```
+
+Note: `chat_app` uses Flutter libraries (`dart:ui`), so `dart test` is not
+the correct runner for that example.
+
 ## Quick Start
 
 1. **Choose an example**: Basic (console) or Chat (Flutter)
@@ -102,6 +121,12 @@ example/
 | **Linux** | arm64, x86_64 | Vulkan | 🟡 Expected (Vulkan Untested) |
 | **Windows** | x64 | Vulkan | ✅ Tested |
 | **Web** | WASM | CPU | ✅ Tested |
+
+### Web Notes
+
+- Web examples run with the `wllama` backend on WASM/CPU.
+- Multimodal projector loading and native LoRA flows are not available on web.
+- `chat_app` on web uses model URLs rather than native file download storage.
 
 ## Troubleshooting
 
