@@ -2,6 +2,61 @@
 
 This document covers the major breaking upgrade paths.
 
+## `0.11.x` -> `0.12.0`: runtime and chat behavior
+
+Upgrade the Apple companions together with the core package:
+
+```yaml
+dependencies:
+  llamadart: ^0.12.0
+  llamadart_llama_cpp_flutter: ^0.0.22
+  llamadart_litert_lm_flutter: ^0.0.14
+  llamadart_stable_diffusion_flutter: ^0.0.3
+```
+
+Add only the companions the app uses. These pairings select llama.cpp
+`v0.6.0-2`, LiteRT-LM `v0.18.0` and stable-diffusion.cpp `v0.2.0-3`.
+Keep the previous companions with core `0.11.x`; a mismatched llama.cpp or
+image companion fails the Apple build's runtime-pin check. Resolve the new
+dependencies with `flutter pub get`.
+
+- Native llama.cpp state files saved by core `0.11.x` or earlier no longer
+  load because llama.cpp `v0.6.0` changed their format. `stateLoadFile` throws
+  `LlamaStateException`; evaluate the prompt again and save a new state file.
+- `LlamaEngine.create`, `ChatSession` and `ChatTemplateEngine.parse` retain
+  trailing reply whitespace in all chat formats. Trim text explicitly when
+  exact comparisons should ignore it. `ChatSession` still removes that
+  whitespace when storing assistant turns, so its next prompt is unchanged.
+- Multimodal GGUF requests place image and audio parts where their messages
+  put them, and do not duplicate the model's media wrappers. Quoted media
+  placeholder strings stay text; where the runtime would treat one as media,
+  it receives a zero-width space after its first character. That character
+  can appear in the response. Recheck prompts that depended on the old media
+  ordering or wrappers.
+- A native projector without the requested image or audio encoder now
+  throws `LlamaUnsupportedException`; update code that caught only
+  `LlamaInferenceException` for that failure. Invalid or raising chat
+  templates throw `LlamaInferenceException` with their template message.
+- LiteRT-LM engine-creation failures with `ComputeDevice.auto` or
+  `ComputeDevice.cpu` throw `LlamaModelException` on first use. Update code
+  that previously caught `LlamaInferenceException` or `StateError` there.
+  With native LiteRT-LM `v0.18.0`, custom Qwen 3 templates should accept both
+  string content and typed text-part lists. Native registered string-content
+  bundles receive text again; this repair does not cover Web or the runtime's
+  single-turn `is_appending_to_prefill` form. See
+  [Chat templates](https://llamadart.leehack.com/docs/guides/chat-template-and-parsing#litert-lm-template-registry).
+- `llamadart_native_runtimes: all` includes the image runtime where it is
+  published. Use `[llama_cpp, litert_lm]` or leave the key unset to keep the
+  prior two-runtime selection on other platforms. On Flutter iOS/macOS,
+  adding `llamadart_stable_diffusion_flutter` selects the image runtime even
+  with that explicit list or an unset key. To omit it on those Apple targets,
+  also omit or remove the image companion dependency. Flutter iOS/macOS need
+  that companion to include the image runtime through SwiftPM when using `all`.
+
+LiteRT-LM automatic tool loops and strict structured output remain unsupported
+on the pinned runtime. The declared iOS 16.4 deployment floor still needs
+runtime qualification; these version updates do not establish it.
+
 ## `0.10.x` -> `0.11.0`: image generation engine API
 
 Image generation is a Preview, and this release changes its API with no

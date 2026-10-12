@@ -13,13 +13,14 @@ writes `MinimumOSVersion` 13.0 into it, while the library requires iOS 16.4.
 The hook reports this as an Xcode build warning, which Xcode and `xcodebuild`
 show but plain `flutter build` and `flutter run` output does not.
 
-Pair companion `0.0.2` with core `0.11.1` and `0.11.0`, and `0.0.1` with core
-`0.10.0`; older cores, including `0.9.x`, ignore it.
+Pair companion `0.0.3` with core `0.12.0`. Keep `0.0.2` with core `0.11.1`
+and `0.11.0`, and `0.0.1` with core `0.10.0`; older cores, including `0.9.x`,
+ignore it.
 
 ```yaml
 dependencies:
-  llamadart: ^0.11.1
-  llamadart_stable_diffusion_flutter: ^0.0.2
+  llamadart: ^0.12.0
+  llamadart_stable_diffusion_flutter: ^0.0.3
 ```
 
 Adding the package selects the `stable_diffusion` runtime for Flutter iOS and
@@ -27,7 +28,7 @@ macOS builds; `llamadart_native_runtimes` still decides the other platforms.
 A list there replaces the default `llama_cpp` and `litert_lm`:
 `[llama_cpp, stable_diffusion]` ships GGUF chat and images,
 `[stable_diffusion]` images only, and `[all, stable_diffusion]` every runtime.
-On cores newer than `0.11.1`, `all` alone includes `stable_diffusion`; on
+From core `0.12.0`, `all` alone includes `stable_diffusion`; on
 Flutter iOS and macOS it does so only with this package.
 
 This package has no runtime Dart API of its own. Import `package:llamadart`

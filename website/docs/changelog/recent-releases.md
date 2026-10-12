@@ -7,7 +7,12 @@ For canonical full release notes, use:
 
 - [`CHANGELOG.md`](https://github.com/leehack/llamadart/blob/main/CHANGELOG.md)
 
-## Unreleased
+## 0.12.0
+
+- Pair this release with Apple companions `llamadart_llama_cpp_flutter`
+  `0.0.22`, `llamadart_litert_lm_flutter` `0.0.14` and
+  `llamadart_stable_diffusion_flutter` `0.0.3`, which link native runtimes
+  `v0.6.0-2`, `v0.18.0` and `v0.2.0-3`, respectively.
 
 - Android validation builds can retain bounded, identity-checked reports in app-private storage.
 
