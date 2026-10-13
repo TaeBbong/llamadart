@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
 import '../../../hook/build.dart' as build_hook;
+import '../../support/hooks_runner_layout.dart';
 
 void main() {
   final nativeTag = _readHookNativeTag();
@@ -167,6 +168,289 @@ void main() {
     },
   );
 
+  group('Flutter Edge AI coexistence', () {
+    const workspacePubspec = 'name: workspace\nworkspace: [app, other]\n';
+    final cases =
+        <
+          ({
+            String name,
+            List<String> roots,
+            Map<String, List<String>> dependencies,
+            Map<String, List<String>> devDependencies,
+            String pubspec,
+            Object? runtimes,
+            bool bundlesLiteRtLm,
+            List<String> warns,
+          })
+        >[
+          for (final runtimes in [null, 'both'])
+            (
+              name: 'standalone app reaching $_edgeAiLlama, runtimes $runtimes',
+              roots: ['app'],
+              dependencies: {
+                'app': [_edgeAiLlama],
+                _edgeAiLlama: ['llamadart'],
+                'llamadart': [],
+              },
+              devDependencies: {},
+              pubspec: 'name: app\n',
+              runtimes: runtimes,
+              bundlesLiteRtLm: false,
+              warns: [_edgeAiLlama, 'name litert_lm'],
+            ),
+          (
+            name: 'standalone app with $_edgeAiLiteRtLm',
+            roots: ['app'],
+            dependencies: {
+              'app': ['llamadart', _edgeAiLiteRtLm],
+              _edgeAiLiteRtLm: [],
+              'llamadart': [],
+            },
+            devDependencies: {},
+            pubspec: 'name: app\n',
+            runtimes: null,
+            bundlesLiteRtLm: false,
+            warns: [_edgeAiLiteRtLm, 'owns the same native libraries'],
+          ),
+          (
+            name: 'standalone app naming litert_lm beside $_edgeAiLlama',
+            roots: ['app'],
+            dependencies: {
+              'app': [_edgeAiLlama],
+              _edgeAiLlama: ['llamadart'],
+              'llamadart': [],
+            },
+            devDependencies: {},
+            pubspec: 'name: app\n',
+            runtimes: ['llama_cpp', 'litert_lm'],
+            bundlesLiteRtLm: true,
+            warns: [],
+          ),
+          (
+            name: 'standalone app with $_edgeAiLlama as a dev dependency',
+            roots: ['app'],
+            dependencies: {
+              'app': ['llamadart'],
+              _edgeAiLlama: ['llamadart'],
+              'llamadart': [],
+            },
+            devDependencies: {
+              'app': [_edgeAiLlama],
+            },
+            pubspec: 'name: app\n',
+            runtimes: null,
+            bundlesLiteRtLm: false,
+            warns: [_edgeAiLlama],
+          ),
+          (
+            name: 'non-Apple app also resolving the Apple LiteRT-LM companion',
+            roots: ['app'],
+            dependencies: {
+              'app': [
+                'llamadart',
+                _edgeAiLiteRtLm,
+                'llamadart_litert_lm_flutter',
+              ],
+              _edgeAiLiteRtLm: [],
+              'llamadart_litert_lm_flutter': ['llamadart'],
+              'llamadart': [],
+            },
+            devDependencies: {},
+            pubspec: 'name: app\n',
+            runtimes: null,
+            bundlesLiteRtLm: false,
+            warns: [_edgeAiLiteRtLm],
+          ),
+          (
+            name: 'workspace member with both engines, none in the root',
+            roots: ['workspace', 'app', _edgeAiLlama, _edgeAiLiteRtLm],
+            dependencies: {
+              'workspace': [],
+              'app': [_edgeAiLlama, _edgeAiLiteRtLm],
+              _edgeAiLlama: ['llamadart'],
+              _edgeAiLiteRtLm: [],
+              'llamadart': [],
+              'melos': [],
+            },
+            devDependencies: {
+              'workspace': ['melos'],
+            },
+            pubspec:
+                'name: workspace\n'
+                'workspace: [app, $_edgeAiLlama, $_edgeAiLiteRtLm]\n'
+                'dev_dependencies:\n'
+                '  melos: any\n',
+            runtimes: null,
+            bundlesLiteRtLm: false,
+            warns: [_edgeAiLlama, _edgeAiLiteRtLm],
+          ),
+          (
+            name: 'workspace whose other member bundles $_edgeAiLlama',
+            roots: ['workspace', 'app', 'other'],
+            dependencies: {
+              'workspace': [],
+              'app': ['llamadart'],
+              'other': [_edgeAiLlama],
+              _edgeAiLlama: ['llamadart'],
+              'llamadart': [],
+            },
+            devDependencies: {},
+            pubspec: workspacePubspec,
+            runtimes: null,
+            bundlesLiteRtLm: false,
+            warns: [_edgeAiLlama],
+          ),
+          (
+            name:
+                'workspace whose $_edgeAiLiteRtLm member never builds llamadart',
+            roots: ['workspace', 'app', 'other'],
+            dependencies: {
+              'workspace': [],
+              'app': ['llamadart'],
+              'other': [_edgeAiLiteRtLm],
+              _edgeAiLiteRtLm: [],
+              'llamadart': [],
+            },
+            devDependencies: {},
+            pubspec: workspacePubspec,
+            runtimes: null,
+            bundlesLiteRtLm: true,
+            warns: [],
+          ),
+          (
+            name: 'workspace member depending on a member with a dev engine',
+            roots: ['workspace', 'app', 'other'],
+            dependencies: {
+              'workspace': [],
+              'app': ['llamadart', 'other'],
+              'other': [],
+              _edgeAiLiteRtLm: [],
+              'llamadart': [],
+            },
+            devDependencies: {
+              'other': [_edgeAiLiteRtLm],
+            },
+            pubspec: workspacePubspec,
+            runtimes: null,
+            bundlesLiteRtLm: true,
+            warns: [],
+          ),
+        ];
+
+    for (final scenario in cases) {
+      test(scenario.name, () async {
+        final layout = await HooksRunnerLayout.create(
+          roots: scenario.roots,
+          dependencies: scenario.dependencies,
+          devDependencies: scenario.devDependencies,
+          pubspec: scenario.pubspec,
+        );
+        addTearDown(layout.delete);
+        final run = await _runLinuxHook(
+          layout: layout,
+          defines: scenario.runtimes == null
+              ? null
+              : {'llamadart_native_runtimes': scenario.runtimes},
+        );
+        expect(run.assets.values, contains('libllamadart.so'));
+        expect(
+          run.assets.values.toSet().intersection(_linuxLiteRtLibraries.toSet()),
+          scenario.bundlesLiteRtLm ? _linuxLiteRtLibraries.toSet() : isEmpty,
+        );
+        expect(
+          run.assets.keys.where((id) => id.contains('litert_lm')),
+          scenario.bundlesLiteRtLm ? isNotEmpty : isEmpty,
+        );
+        expect(run.dependencies, contains(layout.packageGraph.uri));
+        final warning = run.warnings.where(
+          (message) => message.contains('LiteRT-LM'),
+        );
+        if (scenario.warns.isEmpty) {
+          expect(warning, isEmpty);
+        } else {
+          expect(warning.single, stringContainsInOrder(scenario.warns));
+        }
+      });
+    }
+
+    test('naming only litert_lm beside $_edgeAiLlama keeps it', () async {
+      final layout = await HooksRunnerLayout.create(
+        roots: ['app'],
+        dependencies: {
+          'app': [_edgeAiLlama],
+          _edgeAiLlama: ['llamadart'],
+          'llamadart': [],
+        },
+      );
+      addTearDown(layout.delete);
+      final run = await _runLinuxHook(
+        layout: layout,
+        defines: {
+          'llamadart_native_runtimes': ['litert_lm'],
+        },
+      );
+      expect(run.assets.values, unorderedEquals(_linuxLiteRtLibraries));
+      expect(run.warnings, isEmpty);
+    });
+
+    test('naming only litert_lm beside $_edgeAiLiteRtLm fails', () async {
+      final layout = await HooksRunnerLayout.create(
+        roots: ['app'],
+        dependencies: {
+          'app': ['llamadart', _edgeAiLiteRtLm],
+          _edgeAiLiteRtLm: [],
+          'llamadart': [],
+        },
+      );
+      addTearDown(layout.delete);
+      await expectLater(
+        _runLinuxHook(
+          layout: layout,
+          defines: {
+            'llamadart_native_runtimes': ['litert_lm'],
+          },
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('Conflicting LiteRT-LM runtimes'),
+          ),
+        ),
+      );
+    });
+
+    test(
+      'only LiteRT-LM assets follow the resolved graph',
+      () => expectOnlyLiteRtLmFollowsResolvedGraph(
+        hookMain: build_hook.main,
+        targetOS: OS.linux,
+        targetArchitecture: Architecture.x64,
+        liteRtLmLibraries: _linuxLiteRtLibraries,
+      ),
+    );
+
+    test('an unreadable graph keeps the selection and warns', () async {
+      final layout = await HooksRunnerLayout.create(
+        roots: ['app'],
+        dependencies: {
+          'app': [_edgeAiLlama],
+        },
+      );
+      addTearDown(layout.delete);
+      await layout.packageGraph.writeAsString('{"roots": ["app"]}');
+      final run = await _runLinuxHook(layout: layout);
+      expect(run.assets.values, containsAll(_linuxLiteRtLibraries));
+      expect(
+        run.warnings.single,
+        stringContainsInOrder([
+          layout.packageGraph.path,
+          'llamadart_native_runtimes: [llama_cpp]',
+        ]),
+      );
+    });
+  });
+
   test('build hook preserves historical linux mtmd SONAME alias', () async {
     await testCodeBuildHook(
       mainMethod: build_hook.main,
@@ -296,6 +580,20 @@ const List<String> _linuxLiteRtAssetNames = [
   'litert_lm_LiteRtTopKWebGpuSampler',
   'litert_lm_LiteRtWebGpuAccelerator',
 ];
+
+const String _edgeAiLlama = 'flutter_edge_ai_llama';
+const String _edgeAiLiteRtLm = 'flutter_edge_ai_litertlm';
+
+Future<HookRun> _runLinuxHook({
+  HooksRunnerLayout? layout,
+  Map<String, Object?>? defines,
+}) => runCodeBuildHook(
+  hookMain: build_hook.main,
+  targetOS: OS.linux,
+  targetArchitecture: Architecture.x64,
+  layout: layout,
+  userDefines: layout?.userDefines(defines),
+);
 
 const String _mtmdPayload = 'archive-libmtmd.so.0.2.0';
 

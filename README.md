@@ -361,6 +361,17 @@ regardless of GitHub metadata. Nightly cores use canonical decimal spelling
 zeros. The default pin above changes only after the matching artifacts,
 bindings, runtime behavior, and docs have been validated together.
 
+### Alongside Flutter Edge AI
+
+`flutter_edge_ai_litertlm` ships its own LiteRT-LM libraries, and
+`flutter_edge_ai_llama` uses only llamadart's llama.cpp runtime. When the app,
+or any member of its pub workspace, depends on llamadart together with either
+package, the native build hook bundles `llama_cpp` only unless
+`llamadart_native_runtimes` names `litert_lm`. Naming `litert_lm` next to
+`flutter_edge_ai_litertlm` fails the build, because both packages would ship
+the same libraries. Details and the pub workspace rules:
+[Alongside Flutter Edge AI](https://llamadart.leehack.com/docs/platforms/native-build-hooks#alongside-flutter-edge-ai).
+
 ## Common Tasks
 
 | Task | Docs |

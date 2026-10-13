@@ -14,6 +14,7 @@ import 'package:yaml/yaml.dart';
 
 import 'package:llamadart/src/hook/native_bundle_config.dart';
 import 'package:llamadart/src/hook/native_release_pins.dart';
+import 'package:llamadart/src/hook/native_runtime_coexistence.dart';
 
 const _nativeRepoSlug = 'leehack/llamadart-native';
 const _stableDiffusionNativeRepoSlug = 'leehack/stable-diffusion-native';
@@ -262,6 +263,29 @@ void main(List<String> args) async {
       if (selectedRuntimes.isEmpty) {
         return;
       }
+    }
+    final hadLiteRtLm = selectedRuntimes.contains(nativeRuntimeLiteRtLm);
+    final consumerWarnings = <String>[];
+    selectedRuntimes = selectConsumerNativeRuntimes(
+      packageGraph: _resolvedPackageGraph(input),
+      hookPackage: _packageName,
+      selectedRuntimes: selectedRuntimes,
+      explicitLiteRtLm: nativeRuntimeExplicitlySelectedForBundle(
+        bundle: spec.bundle,
+        rawUserConfig: rawNativeRuntimeConfig,
+        runtime: nativeRuntimeLiteRtLm,
+      ),
+      isAppleTarget: _isAppleTarget(code.targetOS),
+      dependency: output.dependencies.add,
+      warn: consumerWarnings.add,
+    );
+    final droppedLiteRtLm =
+        hadLiteRtLm && !selectedRuntimes.contains(nativeRuntimeLiteRtLm);
+    for (final warning in consumerWarnings) {
+      log.warning(warning);
+      // A successful build shows no hook log records; hook stderr is relayed
+      // like the stable_diffusion skip above.
+      if (droppedLiteRtLm) stderr.writeln('warning: llamadart: $warning');
     }
     if (selectedRuntimes.isEmpty) {
       throw Exception(
@@ -779,12 +803,26 @@ void _validateAppleCompanion(
   }
 }
 
+/// The resolved graph of every package sharing this hook's output: the hook
+/// runner keeps that output in the `.dart_tool/` pub resolved into, which a
+/// pub workspace has once, at its root.
+File? _resolvedPackageGraph(BuildInput input) {
+  final root = _consumerPackageRootFromOutput(input);
+  return root == null
+      ? null
+      : File(path.join(root.path, _dartToolDir, 'package_graph.json'));
+}
+
 Directory? _consumerPackageRoot(BuildInput input) {
   final fromUserDefines = _consumerPackageRootFromUserDefines(input);
   if (fromUserDefines != null) {
     return fromUserDefines;
   }
 
+  return _consumerPackageRootFromOutput(input);
+}
+
+Directory? _consumerPackageRootFromOutput(BuildInput input) {
   final sharedOutputPath = path.normalize(
     input.outputDirectoryShared.toFilePath(),
   );
