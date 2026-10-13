@@ -7,8 +7,9 @@ import 'decision_catalog.dart';
 import 'manifest.dart';
 import 'npu_evidence.dart';
 
-/// Conservative GGUF native-log evidence. A selector or device inventory alone
-/// is insufficient: every expected load needs positive offload and compute allocation.
+/// Conservative native-log evidence. A selector or device inventory alone is
+/// insufficient: every expected GGUF load needs positive offload and compute
+/// allocation, and every expected LiteRT GPU load a fully initialized delegate.
 Map<String, dynamic> inspectPlacement(
   Map<String, dynamic> manifest,
   List<Map<String, dynamic>> cases,
@@ -68,22 +69,6 @@ Map<String, dynamic> inspectPlacement(
   if (profile['runtime'] == 'litert' && backend == 'npu') {
     return _inspectNpu(manifest, cases, selected, result);
   }
-  if (profile['runtime'] != 'gguf' ||
-      log == null ||
-      !['cuda', 'metal', 'vulkan'].contains(backend)) {
-    return result;
-  }
-  if (backend == 'vulkan' &&
-      RegExp(
-        r'llvmpipe|lavapipe|swiftshader|microsoft basic render driver|software rasterizer',
-        caseSensitive: false,
-      ).hasMatch(log)) {
-    return {
-      ...result,
-      'reason':
-          'software Vulkan device present; physical accelerator execution is unproven',
-    };
-  }
   final expectedIds = selected
       .where(
         (id) => [
@@ -96,9 +81,23 @@ Map<String, dynamic> inspectPlacement(
         ].contains(id),
       )
       .toList();
-  final loads = cases
-      .where((c) => expectedIds.contains(c['case_id']) && c['status'] == 'PASS')
-      .toList();
+  if (profile['runtime'] == 'litert' && backend == 'gpu') {
+    return log == null
+        ? result
+        : _inspectLiteRtGpu(manifest, cases, expectedIds, log, result);
+  }
+  if (profile['runtime'] != 'gguf' ||
+      log == null ||
+      !['cuda', 'metal', 'vulkan'].contains(backend)) {
+    return result;
+  }
+  if (backend == 'vulkan' && _softwareRenderer.hasMatch(log)) {
+    return {
+      ...result,
+      'reason':
+          'software Vulkan device present; physical accelerator execution is unproven',
+    };
+  }
   final expectedLoads = expectedIds.length;
   final prefix = {
     'cuda': r'CUDA\d+',
@@ -128,17 +127,7 @@ Map<String, dynamic> inspectPlacement(
       )) {
     return {...result, 'reason': 'decision head placement evidence incomplete'};
   }
-  if (expectedLoads == 0 ||
-      expectedIds.any(
-        (id) => loads.where((c) => c['case_id'] == id).length != 1,
-      ) ||
-      loads.any((c) {
-        final name = (c['diagnostics'] as Map?)?['backend_name'];
-        return name is! String ||
-            !name.toLowerCase().contains(backend as String);
-      })) {
-    return result;
-  }
+  if (!_loadsReport(cases, expectedIds, backend as String)) return result;
   final offloads = RegExp(
     r'load_tensors: offloaded (\d+)/(\d+) layers to GPU',
   ).allMatches(log).toList();
@@ -151,10 +140,7 @@ Map<String, dynamic> inspectPlacement(
     void addDevice(String index, String name, {bool discovery = false}) {
       // Discovery includes capability columns and sometimes a vendor suffix;
       // selected-model records contain just the same physical device name.
-      final unsafe = RegExp(
-        r'\b(cpu|software|virtual)\b',
-        caseSensitive: false,
-      ).hasMatch(name);
+      final unsafe = _softwareDevice.hasMatch(name);
       final identity = !discovery || unsafe
           ? name.trim()
           : name
@@ -184,22 +170,14 @@ Map<String, dynamic> inspectPlacement(
     final selectedDevices = RegExp(
       r'Vulkan(\d+) compute buffer size',
     ).allMatches(log).map((match) => match[1]!).toSet();
-    final hardwareVendor = RegExp(
-      r'\b(NVIDIA|AMD|Radeon|Intel|Apple|Adreno|Mali|PowerVR|Immortalis|Xclipse|Qualcomm)\b',
-      caseSensitive: false,
-    );
-    final softwareDevice = RegExp(
-      r'\b(cpu|software|virtual)\b',
-      caseSensitive: false,
-    );
     deviceIdentityVerified =
         selectedDevices.isNotEmpty &&
         selectedDevices.every((id) {
           final names = devices[id];
           return names != null &&
               names.length == 1 &&
-              hardwareVendor.hasMatch(names.single) &&
-              !softwareDevice.hasMatch(names.single);
+              _hardwareVendor.hasMatch(names.single) &&
+              !_softwareDevice.hasMatch(names.single);
         });
   }
   final positive =
@@ -222,6 +200,244 @@ Map<String, dynamic> inspectPlacement(
     'expected_loads': expectedLoads,
     'offload_records': offloads.map((m) => m[0]).toList(),
     'compute_records': buffers.map((m) => m[0]).toList(),
+  };
+}
+
+final _softwareRenderer = RegExp(
+  r'llvmpipe|lavapipe|swiftshader|microsoft basic render driver|software rasterizer',
+  caseSensitive: false,
+);
+final _softwareDevice = RegExp(
+  r'\b(cpu|software|virtual)\b',
+  caseSensitive: false,
+);
+final _hardwareVendor = RegExp(
+  r'\b(NVIDIA|AMD|Radeon|Intel|Apple|Adreno|Mali|PowerVR|Immortalis|Xclipse|Qualcomm)\b',
+  caseSensitive: false,
+);
+
+/// Whether every expected load passed exactly once and reported [backend].
+bool _loadsReport(
+  List<Map<String, dynamic>> cases,
+  List<String> expectedIds,
+  String backend,
+) {
+  final loads = cases
+      .where((c) => expectedIds.contains(c['case_id']) && c['status'] == 'PASS')
+      .toList();
+  return expectedIds.isNotEmpty &&
+      expectedIds.every(
+        (id) => loads.where((c) => c['case_id'] == id).length == 1,
+      ) &&
+      loads.every((c) {
+        final name = (c['diagnostics'] as Map?)?['backend_name'];
+        return name is String && name.toLowerCase().contains(backend);
+      });
+}
+
+const _liteRtGpuFailureMarkers = [
+  'GPU accelerator could not be loaded and registered',
+  'Some ops are not accelerated',
+  'Failed to modify graph with delegate',
+  'VK_ERROR_',
+  'Validation error',
+  'Falling back to CPU',
+];
+
+/// LiteRT-LM tags whose sources were read for the two rules
+/// [_inspectLiteRtGpu] rests on. Before adding a tag, re-read
+/// `runtime/executor/llm_executor_settings_utils.cc` and LiteRT's
+/// `litert/runtime/compiled_model.cc` at that tag's pins.
+const _liteRtGpuOnlyDelegationTags = {'0.18.0'};
+
+/// A logcat `threadtime` record's tag:
+/// `MM-DD HH:MM:SS.mmm PID TID L tag: message`.
+final _logcatTag = RegExp(
+  r'^\d\d-\d\d \d\d:\d\d:\d\d\.\d{3} +\d+ +\d+ [VDIWEF] ([^ :]+) *: ',
+);
+
+/// Load-time evidence that LiteRT-LM's main model was delegated to one
+/// hardware WebGPU-on-Vulkan adapter on Android for every expected load.
+///
+/// The LiteRT-LM GPU executor requests the GPU accelerator alone, and LiteRT
+/// then refuses to compile a model with an undelegated node, so one completed
+/// GPU delegate initialization per expected load implies full delegation of
+/// the main model. The delegate-kernel count is a consistency check on top of
+/// that rule, not proof by itself. No generation request is observed, and the
+/// embedding models LiteRT-LM loads beside the main model and any CPU engine
+/// the process creates are outside this evidence.
+///
+/// [log] is logcat `threadtime` records, as collection retains them. Adapter
+/// and delegate-kernel records count only under the `native` tag and
+/// signature and environment records only under `litert`, as LiteRT-LM 0.18.0
+/// logs them; the same text under another tag, such as a Dart `print` under
+/// `flutter`, leaves placement unverified. Failure markers count under any
+/// tag and are not exhaustive.
+///
+/// Accelerator registration records are ignored: a CPU engine logs them too.
+/// Metal, OpenCL, desktop and Web logs have no qualified shape here.
+Map<String, dynamic> _inspectLiteRtGpu(
+  Map<String, dynamic> manifest,
+  List<Map<String, dynamic>> cases,
+  List<String> expectedIds,
+  String log,
+  Map<String, dynamic> result,
+) {
+  Map<String, dynamic> unverified(
+    String reason, [
+    Map<String, dynamic> details = const {},
+  ]) => {...result, 'reason': reason, 'placement': 'unverified', ...details};
+
+  final environment = manifest['environment'];
+  if (environment is! Map ||
+      environment['platform'] != 'android' ||
+      environment['web'] != false) {
+    return unverified(
+      'LiteRT GPU placement evidence is defined only for Android WebGPU on Vulkan',
+    );
+  }
+  if (!_liteRtGpuOnlyDelegationTags.contains(environment['litert_tag'])) {
+    return unverified(
+      'LiteRT-LM tag is not source-qualified for GPU-only delegation',
+    );
+  }
+  if (!_loadsReport(cases, expectedIds, 'gpu')) {
+    return unverified(
+      'expected load cases did not each pass once reporting the GPU backend',
+    );
+  }
+  final expectedLoads = expectedIds.length;
+  final lowered = log.toLowerCase();
+  final failures = [
+    for (final marker in _liteRtGpuFailureMarkers)
+      if (lowered.contains(marker.toLowerCase())) marker,
+  ];
+  final adapter = RegExp(
+    r'Selected adapter: (([^,]+), arch=[^,]*, vendor=[^,]*, '
+    r'backend=([^,]+), adapterType=([^,]+))$',
+  );
+  final loaded = RegExp(r'Loaded: num_subgraphs=\d+, num_signatures=(\d+)');
+  final kernel = RegExp(
+    r'Total \d+ external tensors are used for delegate inputs and outputs',
+  );
+  const created = 'Created a WebGPU environment.';
+
+  // One window per engine load, opened by its adapter selection. The main
+  // model's signature record is the last one before that selection and
+  // declares more signatures than any other; the embedding models' records
+  // follow the main model's delegate kernels.
+  final adapters = <RegExpMatch>[];
+  final signatures = <int?>[];
+  final environments = <int>[];
+  final kernels = <int>[];
+  var adapterMentions = 0;
+  var beforeFirstLoad = 0;
+  var unusable = 0;
+  var mostSignatures = 0;
+  int? pendingSignatures;
+  for (final line in const LineSplitter().convert(log)) {
+    final tag = _logcatTag.firstMatch(line)?[1];
+    final selects = line.contains('Selected adapter:');
+    final record = loaded.firstMatch(line);
+    final count = record == null ? null : int.tryParse(record[1]!);
+    final initialized = kernel.allMatches(line).length;
+    final ready = created.allMatches(line).length;
+    if (selects) adapterMentions++;
+    if ((selects || initialized > 0) && tag != 'native' ||
+        (record != null || ready > 0) && tag != 'litert' ||
+        record != null && count == null) {
+      unusable++;
+      continue;
+    }
+    if (selects) {
+      final match = adapter.firstMatch(line);
+      if (match != null) {
+        adapters.add(match);
+        signatures.add(pendingSignatures);
+        environments.add(0);
+        kernels.add(0);
+        pendingSignatures = null;
+      }
+    }
+    if (count != null) {
+      pendingSignatures = count;
+      if (count > mostSignatures) mostSignatures = count;
+    }
+    if (adapters.isEmpty) {
+      beforeFirstLoad += initialized + ready;
+    } else {
+      kernels.last += initialized;
+      environments.last += ready;
+    }
+  }
+  final identities = {for (final match in adapters) match[1]!};
+  final details = <String, dynamic>{
+    'expected_loads': expectedLoads,
+    'adapter': identities.length == 1 ? identities.single : null,
+    'adapter_records': adapterMentions,
+    'environment_records': created.allMatches(log).length,
+    'signatures_per_load': signatures.toSet().length == 1
+        ? signatures.first
+        : null,
+    'delegate_records': kernel.allMatches(log).length,
+    'failure_markers': failures,
+  };
+  if (failures.isNotEmpty) {
+    return unverified(
+      'native log reports a GPU delegate failure or CPU fallback',
+      details,
+    );
+  }
+  if (unusable != 0) {
+    return unverified(
+      'GPU delegate records are malformed or were not logged under the '
+      'native runtime tags',
+      details,
+    );
+  }
+  if (adapterMentions != expectedLoads ||
+      adapters.length != expectedLoads ||
+      identities.length != 1) {
+    return unverified(
+      'WebGPU adapter selection is missing, repeated or inconsistent across loads',
+      details,
+    );
+  }
+  final selected = adapters.first;
+  if (selected[3] != 'Vulkan' ||
+      !const ['Integrated GPU', 'Discrete GPU'].contains(selected[4]) ||
+      !_hardwareVendor.hasMatch(selected[2]!) ||
+      _softwareRenderer.hasMatch(selected[1]!) ||
+      _softwareDevice.hasMatch(selected[1]!) ||
+      RegExp('basic render', caseSensitive: false).hasMatch(selected[1]!)) {
+    return unverified(
+      'WebGPU adapter is not a recognized hardware Vulkan GPU',
+      details,
+    );
+  }
+  final perLoad = signatures.first;
+  if (beforeFirstLoad != 0 ||
+      perLoad == null ||
+      perLoad < 1 ||
+      perLoad != mostSignatures ||
+      signatures.any((count) => count != perLoad) ||
+      environments.any((count) => count != 1) ||
+      kernels.any((count) => count != perLoad)) {
+    return unverified(
+      'WebGPU environment or delegate initialization records are incomplete or contradictory',
+      details,
+    );
+  }
+  return {
+    ...result,
+    'verified': true,
+    'reason':
+        'matching runtime diagnostics and a hardware WebGPU/Vulkan delegate '
+        'initialized for all $perLoad main-model signatures of all '
+        '$expectedLoads loads; per-request execution and embedding-model '
+        'placement are unobserved',
+    'placement': 'gpu_delegate_initialized_per_load_execution_unobserved',
+    ...details,
   };
 }
 
