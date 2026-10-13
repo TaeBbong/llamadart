@@ -5,6 +5,8 @@
   `llamadart_stable_diffusion_flutter` `0.0.3`, which link native runtimes
   `v0.6.0-2`, `v0.18.0` and `v0.2.0-3`, respectively.
 
+- On an iOS simulator, `GpuBackend.auto` now runs llama.cpp on the CPU, because Metal returns incorrect output there ([#950](https://github.com/leehack/llamadart/issues/950)). An explicit `GpuBackend.metal` or `ComputeDevice.gpu` still uses Metal and logs a warning; iOS devices and macOS are unchanged.
+
 - Android validation builds can retain bounded, identity-checked reports in app-private storage.
 
 - Clarify that native KV-state restoration does not guarantee identical next-token scores or continuation.
