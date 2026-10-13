@@ -69,7 +69,7 @@ For canonical full release notes, use:
   `@litert-lm/core@0.18.0`. An app still chooses the module through
   `window.__llamadartLiteRtLmModuleUrl`; the chat app's `web/index.html` and
   the docs now name `0.18.0`.
-- Adopt `leehack/stable-diffusion-native@v0.2.0-2` for the opt-in
+- Adopt `leehack/stable-diffusion-native@v0.2.0-3` for the opt-in
   `stable_diffusion` image runtime.
 - Check the memory of Vulkan GPUs before loading an image model
   ([stable-diffusion-native#9](https://github.com/leehack/stable-diffusion-native/issues/9)).
@@ -87,7 +87,7 @@ For canonical full release notes, use:
   longer prints ggml's device messages to stderr: at the default level
   `none` it logs nothing.
 - Update the default llama.cpp runtime to
-  `leehack/llamadart-native@v0.6.0-1` (llama.cpp `v0.6.0`), and the
+  `leehack/llamadart-native@v0.6.0-2` (llama.cpp `v0.6.0`), and the
   `llamadart_llama_cpp_flutter` Apple SwiftPM pin with it.
 - **Behavior change:** a llama.cpp state file saved by llamadart 0.11.x or
   earlier no longer loads: llama.cpp `v0.6.0` changed the session format.
