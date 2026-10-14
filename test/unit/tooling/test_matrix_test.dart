@@ -106,6 +106,8 @@ void main() {
         'image-settings-cpu',
         'image-settings-cpu-vae',
         'image-settings-metal',
+        'image-settings-metal-taesd',
+        'image-settings-metal-vae',
       ]) {
         expect(row.command, contains(id));
         expect(

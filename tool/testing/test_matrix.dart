@@ -870,8 +870,9 @@ const List<TestMatrixRow> testMatrixRows = <TestMatrixRow>[
         'dart run tool/testing/run_local_e2e.dart --scenario '
         'chat-app-image-settings-comparison --device <macos|android|ios>; '
         'on Firebase build --profile image-settings-cpu and '
-        'image-settings-cpu-vae (android) or image-settings-metal (ios), '
-        'then plan, run and collect',
+        'image-settings-cpu-vae (android), or image-settings-metal, '
+        'image-settings-metal-taesd and image-settings-metal-vae (ios), then '
+        'plan, run and collect',
     useWhen:
         'Changing the automatic flashAttention or vaeDirectConvolution '
         'defaults, the stable_diffusion runtime pin, or re-measuring them on '

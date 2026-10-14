@@ -986,11 +986,13 @@ the receipt. Test Lab devices download from Hugging Face at about 3 to 4 MB/s
 (SD-Turbo took 10 minutes on a Galaxy S24) and a phone CPU decodes the full
 SD-Turbo VAE in about 40 s, so Android splits the variants over two 20-minute
 runs: `image-settings-cpu` (SDXS and SD-Turbo with TAESD) and
-`image-settings-cpu-vae` (SD-Turbo with its full VAE). `image-settings-metal`
-runs all three on iOS. The profiles also compile in
-`LLAMADART_CHAT_PARALLEL_DOWNLOAD=true`: iPhone 16 Pro runs that downloaded
-the models over one connection ended in Test Lab infrastructure errors after
-about 9 minutes, before any result was written
+`image-settings-cpu-vae` (SD-Turbo with its full VAE). The profiles also
+compile in `LLAMADART_CHAT_PARALLEL_DOWNLOAD=true`. iOS runs one variant per
+run (`image-settings-metal` for SDXS, `image-settings-metal-taesd`,
+`image-settings-metal-vae`): Flutter's XCTest runner executes the whole Dart
+suite before XCTest reports a test case, and three iPhone 16 Pro runs of all
+three variants, about 10 minutes of Dart each, ended in Test Lab
+infrastructure errors with no result, while a 3.5-minute image test passes
 ([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
 
 #### Micro-batch sweep and the Android Vulkan prompt cap

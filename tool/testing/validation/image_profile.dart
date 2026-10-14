@@ -59,10 +59,9 @@ String imageProfileTestTarget(Map<dynamic, dynamic> profile) =>
     : imageGenerationTestTarget;
 
 /// The dart-defines an image [profile]'s bundle adds: a settings profile
-/// names the variants its run compares, and downloads its 2.7 GB of models
-/// in parallel ranges, because Test Lab devices fetch one Hugging Face
-/// connection at a few MB/s and an iOS run with a long silent download ended
-/// in Test Lab infrastructure errors.
+/// names the variants its run compares, and downloads its models in
+/// parallel ranges: Test Lab devices fetch one Hugging Face connection at a
+/// few MB/s, which took SD-Turbo 7 to 12 minutes of a 20-minute run.
 List<String> imageProfileDefines(Map<dynamic, dynamic> profile) => [
   if (isImageSettingsProfile(profile)) ...[
     'IMAGE_SETTINGS_VARIANTS=${(profile['variants'] as List).join(',')}',

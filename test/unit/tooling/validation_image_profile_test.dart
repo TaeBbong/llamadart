@@ -127,7 +127,7 @@ void main() {
         'run_id': 'qa-image',
         'target':
             target ??
-            (id.endsWith('metal') ? 'firebase-ios' : 'firebase-android'),
+            (id.contains('metal') ? 'firebase-ios' : 'firebase-android'),
         'project': 'test-project',
         'account': 'tester@example.com',
         'profile': id,
@@ -236,6 +236,8 @@ void main() {
         'image-settings-cpu.json',
         'image-settings-cpu-vae.json',
         'image-settings-metal.json',
+        'image-settings-metal-taesd.json',
+        'image-settings-metal-vae.json',
       });
       expect(text.intersection(image), isEmpty);
       expect(
@@ -940,6 +942,8 @@ void main() {
         ('image-settings-cpu', 'android'),
         ('image-settings-cpu-vae', 'android'),
         ('image-settings-metal', 'ios'),
+        ('image-settings-metal-taesd', 'ios'),
+        ('image-settings-metal-vae', 'ios'),
       ]) {
         final profile = _profile(id);
         expect(isImageSettingsProfile(profile), isTrue);
@@ -972,6 +976,8 @@ void main() {
             'image-settings-cpu',
             'image-settings-cpu-vae',
             'image-settings-metal',
+            'image-settings-metal-taesd',
+            'image-settings-metal-vae',
           ])
             imageProfileDefines(_profile(id)),
         ],
@@ -979,7 +985,9 @@ void main() {
           for (final variants in [
             'sdxs,sd_turbo_taesd',
             'sd_turbo_vae',
-            'sdxs,sd_turbo_taesd,sd_turbo_vae',
+            'sdxs',
+            'sd_turbo_taesd',
+            'sd_turbo_vae',
           ])
             [
               'IMAGE_SETTINGS_VARIANTS=$variants',
@@ -1222,11 +1230,7 @@ void main() {
 
       test('verifies exported iOS attachments named by the receipt', () async {
         final source = Directory(p.join(scratch.path, 'device-cache'));
-        await write(
-          source,
-          backend: 'MTL0',
-          variants: imageSettingsVariants.keys.toList(),
-        );
+        await write(source, backend: 'MTL0', variants: ['sd_turbo_vae']);
         File(
           p.join(source.path, imageSettingsJournalName),
         ).writeAsStringSync('{}\n');
@@ -1257,8 +1261,8 @@ void main() {
           ]),
         );
         Directory(p.join(run.path, 'remote-results')).createSync();
-        await sealBundle('image-settings-metal');
-        expect(await assess(plan('image-settings-metal')), isTrue);
+        await sealBundle('image-settings-metal-vae');
+        expect(await assess(plan('image-settings-metal-vae')), isTrue);
         expect(verdict()['expected']['backend'], 'MTL0');
 
         // A PNG the receipt names must be attached.
@@ -1268,14 +1272,14 @@ void main() {
               'attachments': [
                 for (final attachment in attachments)
                   if (!'${attachment['suggestedHumanReadableName']}'.startsWith(
-                    'sdxs__auto',
+                    'sd_turbo_vae__auto',
                   ))
                     attachment,
               ],
             },
           ]),
         );
-        expect(await assess(plan('image-settings-metal')), isFalse);
+        expect(await assess(plan('image-settings-metal-vae')), isFalse);
       });
     });
   });
