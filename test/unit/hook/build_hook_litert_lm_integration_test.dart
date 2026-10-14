@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:code_assets/code_assets.dart';
 import 'package:hooks/hooks.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -629,35 +630,53 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
   for (final architecture in [Architecture.arm64, Architecture.x64]) {
     test(
       'build hook hands Flutter macOS $architecture LiteRT-LM to the SwiftPM '
-      'companion',
+      'companion and keeps its cache for flutter_tester',
       () async {
-        await testCodeBuildHook(
-          mainMethod: build_hook.main,
-          targetOS: OS.macOS,
-          targetArchitecture: architecture,
-          userDefines: await _flutterLiteRtLmOnlyUserDefines(),
-          check: (input, output) {
-            expect(output.assets.encodedAssets, isEmpty);
-            final outputDir = input.outputDirectory.toFilePath();
-            expect(
-              Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
-              isFalse,
-            );
-            expect(
-              output.dependencies.map((uri) => uri.toFilePath()),
-              contains(
-                endsWith(
-                  path.join(
-                    'resolved litert companion',
-                    'darwin',
-                    'llamadart_litert_lm_flutter',
-                    'Package.swift',
+        final records = <String>[];
+        final subscription = Logger.root.onRecord.listen(
+          (record) => records.add(record.message),
+        );
+        addTearDown(subscription.cancel);
+        final stderrLines = await _capturingStderr(
+          () async => testCodeBuildHook(
+            mainMethod: build_hook.main,
+            targetOS: OS.macOS,
+            targetArchitecture: architecture,
+            userDefines: await _flutterLiteRtLmOnlyUserDefines(),
+            check: (input, output) {
+              expect(output.assets.encodedAssets, isEmpty);
+              final outputDir = input.outputDirectory.toFilePath();
+              expect(
+                Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+                isFalse,
+              );
+              expect(
+                output.dependencies.map((uri) => uri.toFilePath()),
+                contains(
+                  endsWith(
+                    path.join(
+                      'resolved litert companion',
+                      'darwin',
+                      'llamadart_litert_lm_flutter',
+                      'Package.swift',
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
+        final arch = architecture == Architecture.arm64 ? 'arm64' : 'x64';
+        expect(
+          records,
+          contains(
+            allOf(
+              startsWith('Using cached LiteRT-LM bundle: '),
+              endsWith(path.join('macos', arch)),
+            ),
+          ),
+        );
+        expect(stderrLines, isNot(contains(contains('warning: llamadart:'))));
       },
     );
   }
@@ -692,23 +711,36 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
       () => _flutterLiteRtLmOnlyUserDefines(resolveLiteRtLmCompanion: false),
     ),
   ]) {
-    test('build hook keeps Flutter macOS LiteRT-LM on the hook cache for '
-        '$scenario', () async {
-      await testCodeBuildHook(
-        mainMethod: build_hook.main,
-        targetOS: OS.macOS,
-        targetArchitecture: Architecture.arm64,
-        userDefines: await defines(),
-        check: (input, output) {
-          expect(output.assets.encodedAssets, isEmpty);
-          final outputDir = input.outputDirectory.toFilePath();
-          expect(
-            Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
-            isTrue,
-          );
-        },
-      );
-    });
+    for (final architecture in [Architecture.arm64, Architecture.x64]) {
+      test('build hook keeps Flutter macOS $architecture LiteRT-LM on the '
+          'hook cache with a build warning for $scenario', () async {
+        final stderrLines = await _capturingStderr(
+          () async => testCodeBuildHook(
+            mainMethod: build_hook.main,
+            targetOS: OS.macOS,
+            targetArchitecture: architecture,
+            userDefines: await defines(),
+            check: (input, output) {
+              expect(output.assets.encodedAssets, isEmpty);
+              final outputDir = input.outputDirectory.toFilePath();
+              expect(
+                Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+                isTrue,
+              );
+            },
+          ),
+        );
+        expect(
+          stderrLines,
+          contains(
+            startsWith(
+              'warning: llamadart: The resolved llamadart_litert_lm_flutter '
+              'does not link the complete macOS LiteRT-LM runtime',
+            ),
+          ),
+        );
+      });
+    }
   }
 
   test(
@@ -1017,6 +1049,23 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
   );
 }
 
+/// Runs [body] with `stderr` captured, returning the lines it wrote.
+Future<List<String>> _capturingStderr(Future<void> Function() body) async {
+  final captured = _CapturedStderr();
+  await IOOverrides.runZoned(body, stderr: () => captured);
+  return captured.lines;
+}
+
+class _CapturedStderr implements Stdout {
+  final lines = <String>[];
+
+  @override
+  void writeln([Object? object = '']) => lines.add('$object');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 String _readPinnedConst(String name) {
   final source = File(
     'lib/src/hook/native_release_pins.dart',
@@ -1299,8 +1348,15 @@ const List<String> _iosLiteRtAssetNames = [
 ];
 
 const List<String> _macosArm64LiteRtLibraries = [
-  'libLiteRtLm.dylib',
   'libCLiteRTLM_mac.dylib',
+  'libGemmaModelConstraintProvider.dylib',
+  'libLiteRt.dylib',
+  'libLiteRtLm.dylib',
+  'libLiteRtMetalAccelerator.dylib',
+  'libLiteRtTopKMetalSampler.dylib',
+  'libLiteRtTopKWebGpuSampler.dylib',
+  'libLiteRtWebGpuAccelerator.dylib',
+  'libwebgpu_dawn.dylib',
 ];
 
 const List<String> _macosX64LiteRtLibraries = [

@@ -2128,6 +2128,35 @@ class SyncNativeReleasePinsTest(unittest.TestCase):
                 block = swift.split(f'name: "{target}",', 1)[1].split("),", 1)[0]
                 self.assertIn(f'checksum: "{_MACOS_SPM_COMPANION_DIGEST}"', block)
 
+    def test_schema_2_sync_keeps_metal_plugins_off_the_macos_spm_layout(self) -> None:
+        # The v0.18.0 macOS Metal slices carry an invalid signature that kills
+        # Debug launches; the macOS GPU path loads the WebGPU accelerator.
+        manifest, release = _schema2_fixture_payloads()
+        _add_macos_spm_companions(manifest, release)
+        for library in ("libLiteRtMetalAccelerator.dylib", "libLiteRtTopKMetalSampler.dylib"):
+            _add_macos_bundle_library(manifest, library)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            result = _run_schema2_sync(
+                root, manifest, release, starting_swift=_checked_in_litert_swift(),
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            repo = root / "repo"
+            runtime = (repo / "lib/src/backends/litert_lm/litert_lm_runtime.dart").read_text()
+            spm = runtime.split("liteRtLmMacOsRequiredNativeSpmFilesForAbi", 1)[1].split("\n}", 1)[0]
+            prepare = (repo / "tool/macos_litert_lm_prepare_app.sh").read_text()
+            prepare_spm = prepare.split("required_native_spm_files()", 1)[1].split("\n}", 1)[0]
+            for text in (spm, prepare_spm):
+                self.assertNotIn("Metal", text)
+            hook_libraries = prepare.split("required_libraries()", 1)[1].split("\n}", 1)[0]
+            self.assertIn("libLiteRtMetalAccelerator.dylib", hook_libraries)
+            swift = (repo / "packages/llamadart_litert_lm_flutter/darwin/llamadart_litert_lm_flutter/Package.swift").read_text()
+            for target in ("LiteRtMetalAccelerator", "LiteRtTopKMetalSampler"):
+                self.assertIn(
+                    f'.target(name: "{target}", condition: .when(platforms: [.iOS]))',
+                    swift,
+                )
+
     def test_schema_2_sync_rejects_package_swift_missing_macos_runtime_target(self) -> None:
         manifest, release = _schema2_fixture_payloads()
         _add_macos_spm_companions(manifest, release)

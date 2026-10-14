@@ -72,7 +72,8 @@ The companion's macOS `LiteRt`, WebGPU accelerator and sampler, and Dawn
 libraries are published for arm64 only, so a universal
 `flutter build macos` prints
 `ld: warning: ignoring file ... found architecture 'arm64', required
-architecture 'x86_64'` for each of them.
+architecture 'x86_64'` for each of them. The arm64-only build that
+[Intel Macs](#intel-macs) describes removes those warnings.
 
 Pair `llamadart_stable_diffusion_flutter` `0.0.3` with core `0.12.0`. Keep
 `0.0.2` with core `0.11.1` and `0.11.0`, and `0.0.1` with core `0.10.0`;
@@ -98,6 +99,33 @@ the hook path, or whose embedded LiteRT-LM frameworks have none, declares that
 runtime's three categories itself. Copy the categories and codes from
 [Apple privacy manifest](../platforms/native-build-hooks#apple-privacy-manifest).
 
+### Intel Macs
+
+LiteRT-LM `v0.18.0` does not load on x86_64 macOS ([litert-lm-native#72](https://github.com/leehack/litert-lm-native/issues/72)): its x86_64
+`LiteRtLm` binary needs Gemma constraint-provider symbols that no x86_64
+library provides. A Flutter macOS app that depends on
+`llamadart_litert_lm_flutter` links that binary, so the whole app, llama.cpp
+included, dies at launch on an Intel Mac or under Rosetta with
+`symbol not found in flat namespace '_LiteRtLmGemmaModelConstraintProvider_Destroy'`.
+A Dart program, or a Flutter app without the companion, starts but cannot load
+LiteRT-LM on x86_64: the hook's x86_64 `libLiteRtLm.dylib` fails `dlopen`
+with the same message on first LiteRT-LM use.
+
+Until that is fixed, build Flutter macOS apps that use the companion for arm64
+only. Add this line to `macos/Runner/Configs/Release.xcconfig`, which the
+Release and Profile configurations use:
+
+```
+EXCLUDED_ARCHS = x86_64
+```
+
+Flutter passes it to `xcodebuild`, so the executable, `App.framework` and the
+Swift packages build for arm64 only, and an Intel Mac refuses to open the app
+instead of crashing it. Debug builds already target only the build Mac's
+architecture. For a one-off build, `FLUTTER_MACOS_ARM64_ONLY=true flutter build
+macos` has the same effect; `flutter config --enable-macos-arm64-only` turns it
+on for every project on the machine.
+
 ### Flutter macOS LiteRT-LM build phase
 
 A Flutter macOS app gets the LiteRT-LM runtime in its bundle only from a
@@ -108,7 +136,9 @@ the build hook leaves the libraries in its cache inside the resolved
 the build machine, from inside the project. Under the App Sandbox, which
 `flutter create` turns on, and in any copied or distributed app, the first
 LiteRT-LM generation on CPU or GPU throws
-`Failed to load dynamic library 'libLiteRt.dylib'`
+`Failed to load dynamic library 'libLiteRt.dylib'`, or
+`'libLiteRtMetalAccelerator.dylib'` with llamadart `0.12.0` and a newer
+companion
 ([#1029](https://github.com/leehack/llamadart/issues/1029)). llama.cpp is not
 affected.
 

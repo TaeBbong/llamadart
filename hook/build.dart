@@ -346,6 +346,17 @@ void main(List<String> args) async {
         );
       }
     }
+    if (code.targetOS == OS.macOS &&
+        liteRtLmBundleSpec != null &&
+        (appleSpmHandledRuntimes?.contains(nativeRuntimeLiteRtLm) ?? false)) {
+      // The app bundle loads the SwiftPM frameworks, but host `flutter test`
+      // runs in flutter_tester, which has none and loads this cache instead.
+      await _acquireLiteRtLmBundle(
+        packageRoot: pkgRoot,
+        bundleSpec: liteRtLmBundleSpec,
+        log: log,
+      );
+    }
     if (appleSpmHandledRuntimes != null) {
       selectedRuntimes = selectedRuntimes
           .where((runtime) => !appleSpmHandledRuntimes.contains(runtime))

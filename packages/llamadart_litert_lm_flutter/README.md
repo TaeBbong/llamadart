@@ -14,6 +14,12 @@ GPU. Those macOS libraries are arm64 only; a universal build prints an
 The Metal accelerator and sampler stay iOS-only: their `v0.18.0` macOS slices
 carry an invalid code signature, and the macOS GPU path uses the WebGPU
 accelerator.
+
+On Intel Macs the `v0.18.0` x86_64 `LiteRtLm` binary cannot load
+([litert-lm-native#72](https://github.com/leehack/litert-lm-native/issues/72)): an app that depends on this package dies at launch with
+`symbol not found in flat namespace '_LiteRtLmGemmaModelConstraintProvider_Destroy'`.
+Build the macOS app for arm64 only, for example with `EXCLUDED_ARCHS = x86_64`
+in `macos/Runner/Configs/Release.xcconfig`.
 The core uses this macOS runtime only when it recognizes this package's
 manifest; with an older companion it keeps LiteRT-LM in its hook cache and
 warns.
