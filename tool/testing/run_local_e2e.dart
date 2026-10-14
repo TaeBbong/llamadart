@@ -1130,6 +1130,31 @@ List<LocalE2eScenario> buildLocalE2eScenarios({String? projectRoot}) {
       ],
     ),
     LocalE2eScenario(
+      name: 'chat-app-image-settings-comparison',
+      group: LocalE2eScenarioGroup.flutterDevice,
+      description:
+          'Time and measure the peak memory of SDXS and SD-Turbo (with and '
+          'without TAESD) images with the automatic attention and VAE '
+          'settings and with them turned off, in one process (#805).',
+      requiresDevice: true,
+      stepsBuilder: (context) => [
+        LocalE2eCommandStep(
+          workingDirectory: context.chatAppDir,
+          executable: 'flutter',
+          arguments: [
+            'test',
+            '--run-skipped',
+            '-t',
+            'local-only',
+            'integration_test/image_settings_comparison_e2e_test.dart',
+            '-d',
+            context.device,
+          ],
+          description: 'Flutter chat app image settings comparison',
+        ),
+      ],
+    ),
+    LocalE2eScenario(
       name: 'chat-app-micro-batch-sweep',
       group: LocalE2eScenarioGroup.flutterDevice,
       description:

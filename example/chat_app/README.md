@@ -939,6 +939,79 @@ Each run directory holds the first image as `coexistence_image.png` and
 `coexistence.json` with the replies, hashes, timings and memory figures. Give
 the Test Lab timeout both downloads on top of the run.
 
+#### Automatic image attention and VAE settings
+
+`integration_test/image_settings_comparison_e2e_test.dart` compares the
+automatic `ImageModelParams.flashAttention` and `vaeDirectConvolution`
+settings with explicit overrides
+([#805](https://github.com/leehack/llamadart/issues/805)). In one process it
+loads SDXS-512, SD-Turbo with TAESD and SD-Turbo with its full VAE once per
+arm: `auto` (no overrides) and `both_off` (both `false`), plus
+`vae_direct_off` for the full VAE, the only variant whose automatic settings
+turn both on; it differs from `auto` in the VAE setting alone and from
+`both_off` in flash attention alone. Each load runs
+`ImageGenerationEngine.warmUp` (a one-step generation on a GPU, nothing on
+the CPU) and then generates the same 512x512 image with seed 42: one timed
+image per load on Android and two elsewhere (`IMAGE_SETTINGS_MEASURED`). Two rounds (`IMAGE_SETTINGS_ROUNDS`) load every
+arm again in the reverse order. A load records wall time per image, split at
+the first decoding event into sampling and decode, the image hash, the
+backend and the peak memory from load to dispose: Apple `phys_footprint` peak reset through
+`proc_reset_footprint_interval` (it includes Metal buffers), Android `VmHWM`
+reset through `/proc/self/clear_refs` where the app may write it, each with a
+20 ms sampled peak of the current figure beside it, which is the peak used
+when the reset is refused. Test Lab refused it on all three phones (Galaxy
+S24 and Galaxy A53 with Android 16, Pixel 9 Pro with Android 15), so their
+peaks are the 20 ms sampled `VmRSS`. A model that the load-time memory check
+refuses is recorded as refused for all its arms. A refusal verifies only when
+it names `ImageModelParams.checkMemory` and the run lists the variant in
+`IMAGE_SETTINGS_EXPECTED_REFUSALS` (a profile's `expected_refusals`), and a
+run must measure at least one arm. A device-specific profile can declare
+`expected_refusals` when a refusal is the expected outcome; the shipped
+profiles declare none, because the S24 and Pixel 9 Pro must measure
+SD-Turbo. The Galaxy A53's memory check refused SD-Turbo (2.9 GiB needed,
+2.5 GiB available), so its `image-settings-cpu` run does not verify
+(undeclared refusal of `sd_turbo_taesd`) and its `image-settings-cpu-vae`
+run has no measured arm. Its SDXS figures come from that unverified run and
+are reported as an observation, not verified evidence.
+
+```text
+IMAGE_SETTINGS {"type":"config",...}
+IMAGE_SETTINGS {"type":"load","variant":"sdxs","arm":"auto","round":0,...}
+IMAGE_SETTINGS {"type":"summary","variant":"sdxs","arm":"both_off","ms_per_image_median":...,"vs_auto":{...}}
+```
+
+Each record is also appended to `image_settings/run-*/journal.jsonl` (app
+external files on Android, the temporary directory elsewhere); the end writes
+`image_settings.json` with the summary and one PNG per arm, and verifies them.
+The test fails when an arm fails, gives different images for the same seed,
+misses a round or an image, or does not start within `IMAGE_SETTINGS_BUDGET_MINUTES` (16).
+`IMAGE_SETTINGS_DEVICE=cpu` measures the CPU on a Mac, and
+`IMAGE_SETTINGS_VARIANTS` runs a comma-separated subset.
+
+```sh
+dart run tool/testing/run_local_e2e.dart \
+  --scenario chat-app-image-settings-comparison --device <device>
+```
+
+For Firebase Test Lab, build it with a validation profile; collection grades
+the receipt. Test Lab devices download from Hugging Face at about 3 to 4 MB/s
+(SD-Turbo took 10 minutes on a Galaxy S24) and a phone CPU decodes the full
+SD-Turbo VAE in about 40 s, so Android splits the variants over two 20-minute
+runs: `image-settings-cpu` (SDXS and SD-Turbo with TAESD) and
+`image-settings-cpu-vae` (SD-Turbo with its full VAE). The profiles also
+compile in `LLAMADART_CHAT_PARALLEL_DOWNLOAD=true`. iOS runs one variant per
+run (`image-settings-metal` for SDXS, `image-settings-metal-taesd`,
+`image-settings-metal-vae`): Flutter's XCTest runner executes the whole Dart
+suite before XCTest reports a test case, and three iPhone 16 Pro runs of all
+three variants, about 10 minutes of Dart each, ended in Test Lab
+infrastructure errors with no result, while a 3.5-minute image test passes. A profile can also set `rounds` and `measured_per_load`
+(compiled in as `IMAGE_SETTINGS_ROUNDS` and `IMAGE_SETTINGS_MEASURED`).
+A two-round full-VAE run also ended in infrastructure errors;
+`image-settings-metal-vae` sets one of each as the configuration to retry,
+and it has not produced evidence yet
+([#1033](https://github.com/leehack/llamadart/issues/1033);
+[image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
+
 #### Micro-batch sweep and the Android Vulkan prompt cap
 
 `integration_test/micro_batch_sweep_e2e_test.dart` loads the locked

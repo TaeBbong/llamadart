@@ -96,7 +96,8 @@ class SelectionTest(unittest.TestCase):
 
     def test_chat_app_files_imported_by_validation_tooling_run_root_validation_tests(self):
         for path in ('example/chat_app/lib/models/image_model_profile.dart',
-                     'example/chat_app/integration_test/support/image_evidence.dart'):
+                     'example/chat_app/integration_test/support/image_evidence.dart',
+                     'example/chat_app/integration_test/support/image_settings_evidence.dart'):
             with self.subTest(path=path):
                 plan = ci.select([path])
                 for job in ('analyze', 'validation-harness', 'validation-integration',

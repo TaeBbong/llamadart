@@ -379,7 +379,7 @@ class RemoteController {
     requireExecutableValidationProfile(profile, verifiedAndroidKit: validNpu);
     if (isImageGenerationProfile(profile)) {
       requireImageGenerationProfile(profile, manifest['target'] as String);
-      if (manifest['test_target'] != imageGenerationTestTarget ||
+      if (manifest['test_target'] != imageProfileTestTarget(profile) ||
           manifest['stable_diffusion_tag'] is! String) {
         throw StateError('Image bundle lacks its test target or runtime pin');
       }
@@ -1073,10 +1073,10 @@ class GcloudProvider implements RemoteProvider {
   ) async {
     if (!plan.firebase) return _startVm(plan, checkpoint);
     final ios = plan.target == 'firebase-ios';
-    final image = isImageGenerationProfile(
-      jsonDecode(File(p.join(plan.bundle, 'profile.json')).readAsStringSync())
-          as Map,
-    );
+    final profile =
+        jsonDecode(File(p.join(plan.bundle, 'profile.json')).readAsStringSync())
+            as Map;
+    final image = isImageGenerationProfile(profile);
     final args = [
       'firebase',
       'test',
@@ -1094,7 +1094,7 @@ class GcloudProvider implements RemoteProvider {
       '--results-dir=${plan.runId}',
       '--format=json',
       if (!ios)
-        '--directories-to-pull=${image ? androidImageEvidenceDirectory : androidValidationDirectory}',
+        '--directories-to-pull=${image ? androidImageProfileDirectory(profile) : androidValidationDirectory}',
     ];
     final result = await command(
       plan,
