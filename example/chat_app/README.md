@@ -987,7 +987,10 @@ the receipt. Test Lab devices download from Hugging Face at about 3 to 4 MB/s
 SD-Turbo VAE in about 40 s, so Android splits the variants over two 20-minute
 runs: `image-settings-cpu` (SDXS and SD-Turbo with TAESD) and
 `image-settings-cpu-vae` (SD-Turbo with its full VAE). `image-settings-metal`
-runs all three on iOS
+runs all three on iOS. The profiles also compile in
+`LLAMADART_CHAT_PARALLEL_DOWNLOAD=true`: iPhone 16 Pro runs that downloaded
+the models over one connection ended in Test Lab infrastructure errors after
+about 9 minutes, before any result was written
 ([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
 
 #### Micro-batch sweep and the Android Vulkan prompt cap

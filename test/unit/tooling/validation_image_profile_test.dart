@@ -976,9 +976,15 @@ void main() {
             imageProfileDefines(_profile(id)),
         ],
         [
-          ['IMAGE_SETTINGS_VARIANTS=sdxs,sd_turbo_taesd'],
-          ['IMAGE_SETTINGS_VARIANTS=sd_turbo_vae'],
-          ['IMAGE_SETTINGS_VARIANTS=sdxs,sd_turbo_taesd,sd_turbo_vae'],
+          for (final variants in [
+            'sdxs,sd_turbo_taesd',
+            'sd_turbo_vae',
+            'sdxs,sd_turbo_taesd,sd_turbo_vae',
+          ])
+            [
+              'IMAGE_SETTINGS_VARIANTS=$variants',
+              'LLAMADART_CHAT_PARALLEL_DOWNLOAD=true',
+            ],
         ],
       );
       expect(imageProfileDefines(_profile('image-sdxs-cpu')), isEmpty);
