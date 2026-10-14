@@ -213,10 +213,13 @@ void main() {
     ).listSync().whereType<File>())
       _readJson(file.path),
   ];
-  // The bundle builder records `execution_path` in the bundled copy.
+  // The bundle builder records `execution_path` in the bundled copy; a
+  // device-specific settings profile may add `expected_refusals`, which
+  // `validation_image_profile_test.dart` covers.
   final imageKeys = {
     for (final profile in imageProfiles) ...profile.keys,
     'execution_path',
+    'expected_refusals',
   };
 
   Set<String> undeclaredTextKeys(String sources) {

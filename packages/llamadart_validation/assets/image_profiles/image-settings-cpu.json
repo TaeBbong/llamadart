@@ -8,9 +8,6 @@
     "sdxs",
     "sd_turbo_taesd"
   ],
-  "expected_refusals": [
-    "sd_turbo_taesd"
-  ],
   "models": [
     {
       "filename": "sdxs-512-tinySDdistilled_Q8_0.gguf",

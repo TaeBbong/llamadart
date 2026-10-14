@@ -983,10 +983,7 @@ void main() {
         ],
         [
           for (final (variants, size) in [
-            (
-              'sdxs,sd_turbo_taesd',
-              ['IMAGE_SETTINGS_EXPECTED_REFUSALS=sd_turbo_taesd'],
-            ),
+            ('sdxs,sd_turbo_taesd', <String>[]),
             ('sd_turbo_vae', <String>[]),
             ('sdxs', <String>[]),
             ('sd_turbo_taesd', <String>[]),
@@ -1001,6 +998,13 @@ void main() {
               'LLAMADART_CHAT_PARALLEL_DOWNLOAD=true',
             ],
         ],
+      );
+      expect(
+        imageProfileDefines({
+          ..._profile('image-settings-cpu'),
+          'expected_refusals': ['sd_turbo_taesd'],
+        }),
+        contains('IMAGE_SETTINGS_EXPECTED_REFUSALS=sd_turbo_taesd'),
       );
       expect(imageProfileDefines(_profile('image-sdxs-cpu')), isEmpty);
       expect(isImageSettingsProfile(_profile('image-sdxs-cpu')), isFalse);
@@ -1202,24 +1206,38 @@ void main() {
         expect(verdict()['evidence']['summary'], hasLength(4));
         expect(verdict()['expected']['variants'], ['sdxs', 'sd_turbo_taesd']);
         expect(verdict()['expected']['model_locks'], hasLength(3));
-        expect(verdict()['expected']['expected_refusals'], ['sd_turbo_taesd']);
+        expect(verdict()['expected']['expected_refusals'], isEmpty);
       });
 
       test('verifies a declared refusal, not an undeclared one or a run '
           'without a measured arm', () async {
-        await sealBundle('image-settings-cpu');
+        void declare(Map<String, dynamic> profile) =>
+            profile['expected_refusals'] = ['sd_turbo_taesd'];
+        await sealBundle('image-settings-cpu', editProfile: declare);
         await write(pulledRun('run-1'), refused: ['sd_turbo_taesd']);
         expect(await assess(plan('image-settings-cpu')), isTrue);
+        expect(verdict()['expected']['expected_refusals'], ['sd_turbo_taesd']);
 
-        for (final (profile, variants, refused, reason) in [
+        for (final (profile, edit, variants, refused, reason) in [
+          // The shipped CPU profile runs on phones that must measure
+          // SD-Turbo, so a refusal there fails.
           (
             'image-settings-cpu',
+            null,
+            ['sdxs', 'sd_turbo_taesd'],
+            ['sd_turbo_taesd'],
+            'undeclared refusal: sd_turbo_taesd',
+          ),
+          (
+            'image-settings-cpu',
+            declare,
             ['sdxs', 'sd_turbo_taesd'],
             ['sdxs'],
             'undeclared refusal: sdxs',
           ),
           (
             'image-settings-cpu-vae',
+            null,
             ['sd_turbo_vae'],
             ['sd_turbo_vae'],
             'no measured arm',
@@ -1227,7 +1245,7 @@ void main() {
         ]) {
           run.deleteSync(recursive: true);
           run.createSync();
-          await sealBundle(profile);
+          await sealBundle(profile, editProfile: edit);
           // The device-side check uses the receipt's own declaration and
           // rejects a run without a measured arm before grading.
           await expectLater(

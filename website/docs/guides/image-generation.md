@@ -549,7 +549,9 @@ comparison. Peak memory is the `phys_footprint` interval peak on the iPhone
 and a 20 ms sampled `VmRSS` peak on Android, where Test Lab refused the
 `VmHWM` reset on all three phones. The Galaxy A53's memory check refused
 SD-Turbo (about 2.9 GiB needed, 2.5 GiB available), so it has no SD-Turbo
-figures, and the iPhone full-VAE arm has not been measured yet
+figures, and its SDXS figures come from a run that does not verify because
+of that refusal: they are an observation, not verified evidence. The iPhone
+full-VAE arm has not been measured yet
 ([#1033](https://github.com/leehack/llamadart/issues/1033)).
 
 With a tiny autoencoder, direct convolutions cost time for little memory:

@@ -965,10 +965,14 @@ peaks are the 20 ms sampled `VmRSS`. A model that the load-time memory check
 refuses is recorded as refused for all its arms. A refusal verifies only when
 it names `ImageModelParams.checkMemory` and the run lists the variant in
 `IMAGE_SETTINGS_EXPECTED_REFUSALS` (a profile's `expected_refusals`), and a
-run must measure at least one arm. `image-settings-cpu` lists SD-Turbo with
-TAESD, which the Galaxy A53 refuses (2.9 GiB needed, 2.5 GiB available): its
-SD-Turbo rows are refusals, not measurements, and its all-refused
-`image-settings-cpu-vae` run does not verify.
+run must measure at least one arm. A device-specific profile can declare
+`expected_refusals` when a refusal is the expected outcome; the shipped
+profiles declare none, because the S24 and Pixel 9 Pro must measure
+SD-Turbo. The Galaxy A53's memory check refused SD-Turbo (2.9 GiB needed,
+2.5 GiB available), so its `image-settings-cpu` run does not verify
+(undeclared refusal of `sd_turbo_taesd`) and its `image-settings-cpu-vae`
+run has no measured arm. Its SDXS figures come from that unverified run and
+are reported as an observation, not verified evidence.
 
 ```text
 IMAGE_SETTINGS {"type":"config",...}

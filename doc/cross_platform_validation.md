@@ -779,8 +779,9 @@ README). Their `variants` list is compiled in as `IMAGE_SETTINGS_VARIANTS`
 and must match the receipt, as must the optional `rounds` and
 `measured_per_load`. The optional `expected_refusals` lists the variants its
 devices may see refused by the load-time memory check
-(`IMAGE_SETTINGS_EXPECTED_REFUSALS`); `image-settings-cpu` lists
-`sd_turbo_taesd`, which a Galaxy A53 refuses. The variants are split over several runs to stay
+(`IMAGE_SETTINGS_EXPECTED_REFUSALS`), for a device-specific profile whose
+expected outcome is a refusal. The shipped profiles list none: they run on
+phones that must measure every variant. The variants are split over several runs to stay
 inside a 20-minute Test Lab run on Android, and on iOS inside the few minutes
 an XCTest run tolerates before its first test case (see the chat app README). They live outside
 `assets/profiles/` because that directory is bundled into the QA app and every
