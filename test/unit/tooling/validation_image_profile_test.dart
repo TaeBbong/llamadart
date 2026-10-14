@@ -982,15 +982,19 @@ void main() {
             imageProfileDefines(_profile(id)),
         ],
         [
-          for (final variants in [
-            'sdxs,sd_turbo_taesd',
-            'sd_turbo_vae',
-            'sdxs',
-            'sd_turbo_taesd',
-            'sd_turbo_vae',
+          for (final (variants, size) in [
+            ('sdxs,sd_turbo_taesd', <String>[]),
+            ('sd_turbo_vae', <String>[]),
+            ('sdxs', <String>[]),
+            ('sd_turbo_taesd', <String>[]),
+            (
+              'sd_turbo_vae',
+              ['IMAGE_SETTINGS_ROUNDS=1', 'IMAGE_SETTINGS_MEASURED=1'],
+            ),
           ])
             [
               'IMAGE_SETTINGS_VARIANTS=$variants',
+              ...size,
               'LLAMADART_CHAT_PARALLEL_DOWNLOAD=true',
             ],
         ],
@@ -1018,6 +1022,9 @@ void main() {
         'empty variants': (v) => v['variants'] = <String>[],
         'unknown variant': (v) => v['variants'] = ['sdxl'],
         'repeated variant': (v) => v['variants'] = ['sdxs', 'sdxs'],
+        'zero rounds': (v) => v['rounds'] = 0,
+        'too many rounds': (v) => v['rounds'] = 5,
+        'text measured count': (v) => v['measured_per_load'] = '1',
         'native path': (v) => v['execution_path'] = 'native_c_api',
       };
       for (final entry in mutations.entries) {
@@ -1091,6 +1098,7 @@ void main() {
         String backend = 'CPU',
         String commit = _commit,
         List<String> variants = const ['sdxs', 'sd_turbo_taesd'],
+        Map<String, int> runSize = const {},
       }) async {
         final hash = sha256.convert(png).toString();
         await writeImageSettingsEvidence(
@@ -1113,6 +1121,7 @@ void main() {
             ],
             'request': {'seed': 42, 'width': 512, 'height': 512},
             'variants': variants,
+            ...runSize,
             'loads': [
               for (final MapEntry(key: variant, value: arms)
                   in imageSettingsVariants.entries)
@@ -1186,6 +1195,16 @@ void main() {
               () => write(pulledRun('run-1'), variants: ['sd_turbo_vae']),
             ),
             (
+              'rounds mismatch',
+              () async {
+                await sealBundle(
+                  'image-settings-cpu',
+                  editProfile: (profile) => profile['rounds'] = 1,
+                );
+                await write(pulledRun('run-1'));
+              },
+            ),
+            (
               'source does not match',
               () => write(pulledRun('run-1'), commit: 'a' * 40),
             ),
@@ -1230,7 +1249,12 @@ void main() {
 
       test('verifies exported iOS attachments named by the receipt', () async {
         final source = Directory(p.join(scratch.path, 'device-cache'));
-        await write(source, backend: 'MTL0', variants: ['sd_turbo_vae']);
+        await write(
+          source,
+          backend: 'MTL0',
+          variants: ['sd_turbo_vae'],
+          runSize: {'rounds': 1, 'measured_per_load': 1},
+        );
         File(
           p.join(source.path, imageSettingsJournalName),
         ).writeAsStringSync('{}\n');
@@ -1264,6 +1288,7 @@ void main() {
         await sealBundle('image-settings-metal-vae');
         expect(await assess(plan('image-settings-metal-vae')), isTrue);
         expect(verdict()['expected']['backend'], 'MTL0');
+        expect(verdict()['expected']['rounds'], 1);
 
         // A PNG the receipt names must be attached.
         manifest.writeAsStringSync(

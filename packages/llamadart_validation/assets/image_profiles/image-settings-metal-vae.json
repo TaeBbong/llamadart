@@ -7,6 +7,8 @@
   "variants": [
     "sd_turbo_vae"
   ],
+  "rounds": 1,
+  "measured_per_load": 1,
   "models": [
     {
       "filename": "sdxs-512-tinySDdistilled_Q8_0.gguf",

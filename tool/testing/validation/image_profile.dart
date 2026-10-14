@@ -65,6 +65,8 @@ String imageProfileTestTarget(Map<dynamic, dynamic> profile) =>
 List<String> imageProfileDefines(Map<dynamic, dynamic> profile) => [
   if (isImageSettingsProfile(profile)) ...[
     'IMAGE_SETTINGS_VARIANTS=${(profile['variants'] as List).join(',')}',
+    for (final (key, define) in _runSizeDefines)
+      if (profile[key] case final int value) '$define=$value',
     'LLAMADART_CHAT_PARALLEL_DOWNLOAD=true',
   ],
 ];
@@ -151,7 +153,16 @@ void requireImageGenerationProfile(
         if (settings) ...['suite', 'variants', 'models'] else 'model',
         // The builder records the execution path in the bundled copy.
         if (profile.containsKey('execution_path')) 'execution_path',
-      ]);
+        for (final (key, _) in _runSizeDefines)
+          if (settings && profile.containsKey(key)) key,
+      ]) &&
+      _runSizeDefines.every(
+        (entry) =>
+            !profile.containsKey(entry.$1) ||
+            (profile[entry.$1] is int &&
+                (profile[entry.$1] as int) >= 1 &&
+                (profile[entry.$1] as int) <= 4),
+      );
   final variants = profile['variants'];
   if (!shapeValid ||
       !(settings
@@ -166,8 +177,9 @@ void requireImageGenerationProfile(
           ? 'Image settings profiles lock the chat app SDXS, SD-Turbo and '
                 'TAESD files exactly: schema_version, id, runtime '
                 'stable_diffusion, backend, suite $imageSettingsSuite, '
-                'variants of ${imageSettingsVariants.keys.join(', ')} and '
-                'models with kind image'
+                'variants of ${imageSettingsVariants.keys.join(', ')}, '
+                'models with kind image, and optionally rounds and '
+                'measured_per_load from 1 to 4'
           : 'Image-generation profiles lock the chat app SDXS model exactly: '
                 'schema_version, id, runtime stable_diffusion, backend and a '
                 'model with kind image',
@@ -186,6 +198,12 @@ void requireImageGenerationProfile(
     );
   }
 }
+
+/// Optional settings profile keys that size a run, and the test's defines.
+const _runSizeDefines = [
+  ('rounds', 'IMAGE_SETTINGS_ROUNDS'),
+  ('measured_per_load', 'IMAGE_SETTINGS_MEASURED'),
+];
 
 bool _sameKeys(Map<dynamic, dynamic> value, List<String> keys) =>
     value.length == keys.length && keys.every(value.containsKey);
@@ -246,6 +264,9 @@ bool gradeCollectedImageRun(
     'runtime_tag': bundle['stable_diffusion_tag'],
     if (settings) 'variants': profile['variants'],
     if (settings)
+      for (final (key, _) in _runSizeDefines)
+        if (profile.containsKey(key)) key: profile[key],
+    if (settings)
       'model_locks': [
         for (final model in profile['models'] as List)
           {
@@ -289,6 +310,11 @@ bool gradeCollectedImageRun(
           for (final variant in expected['variants'] as List) variant as String,
         ],
       );
+      for (final (key, _) in _runSizeDefines) {
+        if (expected.containsKey(key) && manifest[key] != expected[key]) {
+          throw FormatException('Image settings $key mismatch');
+        }
+      }
       // The loads stay in the receipt; the verdict carries the table.
       evidence = {
         for (final key in [

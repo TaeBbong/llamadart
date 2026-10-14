@@ -992,7 +992,10 @@ run (`image-settings-metal` for SDXS, `image-settings-metal-taesd`,
 `image-settings-metal-vae`): Flutter's XCTest runner executes the whole Dart
 suite before XCTest reports a test case, and three iPhone 16 Pro runs of all
 three variants, about 10 minutes of Dart each, ended in Test Lab
-infrastructure errors with no result, while a 3.5-minute image test passes
+infrastructure errors with no result, while a 3.5-minute image test passes. A profile can also set `rounds` and `measured_per_load`
+(compiled in as `IMAGE_SETTINGS_ROUNDS` and `IMAGE_SETTINGS_MEASURED`);
+`image-settings-metal-vae` uses one of each, because a two-round full-VAE run
+also ended in infrastructure errors
 ([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
 
 #### Micro-batch sweep and the Android Vulkan prompt cap

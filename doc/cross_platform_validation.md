@@ -776,7 +776,8 @@ automatic attention and VAE settings against explicit overrides for SDXS and
 SD-Turbo with and without TAESD, with time per image and peak memory per arm
 ([#805](https://github.com/leehack/llamadart/issues/805); see the chat app
 README). Their `variants` list is compiled in as `IMAGE_SETTINGS_VARIANTS`
-and must match the receipt. The variants are split over several runs to stay
+and must match the receipt, as must the optional `rounds` and
+`measured_per_load`. The variants are split over several runs to stay
 inside a 20-minute Test Lab run on Android, and on iOS inside the few minutes
 an XCTest run tolerates before its first test case (see the chat app README). They live outside
 `assets/profiles/` because that directory is bundled into the QA app and every
