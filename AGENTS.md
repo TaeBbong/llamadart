@@ -129,6 +129,9 @@ analyze and the relevant tests before the final commit.
   `Unreleased` into a version only in an explicit release task.
 - One short user-facing bullet per change; implementation detail and migration
   notes go in the PR or maintainer docs.
+- When release prep moves `Unreleased` into a version, compact it in both
+  files: merge related or follow-up bullets, drop duplicates and items users
+  cannot observe, and tighten wording. Released sections stay as published.
 - Before release prep or a change to current install snippets, run
   `dart run tool/testing/verify_release_docs_versions.dart`, then again with
   `--release-prep`; resolve pending companion bumps in the release-prep PR.
@@ -178,6 +181,15 @@ analyze and the relevant tests before the final commit.
   independent audit already ran on that head. If it finds a PR-caused P1, stop
   lower-priority merge work, file a causally accurate issue, and prepare one
   cohesive recovery before resuming feature work.
+
+## Writing for people
+
+PR bodies, issues, comments, review replies, commit messages, changelog
+entries, docs and code comments are read by people. Keep them concise: lead
+with the outcome, say each thing once, and cut narration, restated context and
+boilerplate. Put bulky evidence (logs, matrices, mutation lists) in a table or
+a linked artifact, not prose. Code comments explain why (a non-obvious
+constraint or trade-off), never what the code does.
 
 ## This file
 
