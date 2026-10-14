@@ -96,6 +96,30 @@ void main() {
       );
     });
 
+    test('image settings row names its scenario and both profiles', () {
+      final row = testMatrixRows.singleWhere(
+        (row) => row.id == 'chat-app-image-settings-comparison',
+      );
+
+      expect(row.command, contains('chat-app-image-settings-comparison'));
+      for (final id in ['image-settings-cpu', 'image-settings-metal']) {
+        expect(row.command, contains(id));
+        expect(
+          File(
+            'packages/llamadart_validation/assets/image_profiles/$id.json',
+          ).existsSync(),
+          isTrue,
+        );
+      }
+      expect(
+        File(
+          'example/chat_app/integration_test/'
+          'image_settings_comparison_e2e_test.dart',
+        ).existsSync(),
+        isTrue,
+      );
+    });
+
     test('rows name local E2E scenarios that the runner defines', () {
       final scenarios = buildLocalE2eScenarios().map((s) => s.name).toSet();
       final referenced = <String>{};

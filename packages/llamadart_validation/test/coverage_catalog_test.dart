@@ -201,6 +201,7 @@ void main() {
       'example/chat_app/lib/models/image_model_profile.dart',
       'example/chat_app/lib/models/downloadable_model.dart',
       'example/chat_app/integration_test/support/image_evidence.dart',
+      'example/chat_app/integration_test/support/image_settings_evidence.dart',
     ]) {
       final copy = File('${isolated.path}/$path');
       copy.parent.createSync(recursive: true);

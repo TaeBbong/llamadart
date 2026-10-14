@@ -109,7 +109,7 @@ Future<Directory> buildValidationBundle(
     }
   }
   final testTarget = image
-      ? imageGenerationTestTarget
+      ? imageProfileTestTarget(selectedProfile)
       : 'integration_test/validation_test.dart';
   final npu = selectedProfile['backend'] == 'npu';
   requireExecutableValidationProfile(
