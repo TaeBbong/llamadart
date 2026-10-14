@@ -31,6 +31,7 @@ APPS = ('android', 'web', 'ios-inputs')
 VALIDATION_IMPORTED_CHAT_APP_FILES = (
     'example/chat_app/lib/models/image_model_profile.dart',
     'example/chat_app/integration_test/support/image_evidence.dart',
+    'example/chat_app/integration_test/support/image_settings_evidence.dart',
 )
 
 

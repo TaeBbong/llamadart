@@ -309,6 +309,27 @@ void main() {
       );
     });
 
+    test('dry-runs the image settings comparison device scenario', () async {
+      final result = await runLocalE2e(const [
+        '--scenario',
+        'chat-app-image-settings-comparison',
+        '--device',
+        'ios',
+        '--dry-run',
+      ], projectRoot: '/repo');
+
+      expect(result.exitCode, 0);
+      expect(
+        result.stdout,
+        contains(
+          'cd /repo/example/chat_app && flutter test --run-skipped '
+          '-t local-only '
+          'integration_test/image_settings_comparison_e2e_test.dart '
+          '-d ios',
+        ),
+      );
+    });
+
     test('dry-runs the text and image coexistence device scenario', () async {
       final result = await runLocalE2e(const [
         '--scenario',

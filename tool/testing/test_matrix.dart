@@ -855,6 +855,31 @@ const List<TestMatrixRow> testMatrixRows = <TestMatrixRow>[
         'Test Lab build is in example/chat_app/README.md.',
   ),
   TestMatrixRow(
+    id: 'chat-app-image-settings-comparison',
+    tier: 'targeted',
+    mode: 'local-only; Firebase through the image-settings-* profiles',
+    covers:
+        'the automatic image attention and VAE settings against '
+        'flashAttention: false and vaeDirectConvolution: false (and the '
+        'VAE setting alone for the full SD-Turbo VAE) for SDXS and SD-Turbo '
+        'with and without TAESD, in one process at seed 42 and 512x512: warm '
+        'time '
+        'per image, sampling and decode split, per-load peak memory, '
+        'backend and image hash per arm, with a verified receipt',
+    command:
+        'dart run tool/testing/run_local_e2e.dart --scenario '
+        'chat-app-image-settings-comparison --device <macos|android|ios>; '
+        'on Firebase build --profile image-settings-cpu and '
+        'image-settings-cpu-vae (android), or image-settings-metal, '
+        'image-settings-metal-taesd and image-settings-metal-vae (ios), then '
+        'plan, run and collect',
+    useWhen:
+        'Changing the automatic flashAttention or vaeDirectConvolution '
+        'defaults, the stable_diffusion runtime pin, or re-measuring them on '
+        'a device (#805). Downloads SDXS, SD-Turbo and TAESD (2.7 GB); see '
+        'doc/cross_platform_validation.md.',
+  ),
+  TestMatrixRow(
     id: 'chat-app-micro-batch-sweep',
     tier: 'targeted',
     mode: 'local-only',

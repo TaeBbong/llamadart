@@ -161,6 +161,7 @@ Pick targeted rows based on the touched surface:
 | Chat-app image screen or image model downloads | `chat-app-image-generation-smoke` |
 | Physical-device image evidence on Firebase, or image evidence grading | `firebase-image-generation-e2e`, `validation-harness` |
 | llama.cpp and `stable_diffusion` loaded in one process on a device | `chat-app-text-image-coexistence` |
+| Automatic image `flashAttention` or `vaeDirectConvolution` defaults, or re-measuring them on a device | `chat-app-image-settings-comparison` |
 | Chat-app microphone transcription flow | `chat-app-microphone-transcription-smoke` |
 | Chat-app live LiteRT-LM dictation | `litert-lm-asr-smoke`, `chat-app-live-speech-smoke` |
 | Chat-app Ask with voice | `gguf-audio-chat-smoke`, `litert-lm-chat-features-smoke`, `chat-app-voice-question-smoke` |

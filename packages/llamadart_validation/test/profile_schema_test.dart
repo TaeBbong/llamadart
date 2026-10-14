@@ -162,14 +162,22 @@ Set<String> _literalKeys(String source, List<String> receivers) => {
       key.group(1)!,
 };
 
-String _readerSources() =>
+/// Image profiles (`assets/image_profiles/`) have their own reader and key
+/// allowlist instead of the text-profile schema.
+const _imageProfileReader = '../../tool/testing/validation/image_profile.dart';
+
+String _readerSources({required bool image}) =>
     [
           ...Directory('lib/src').listSync().whereType<File>(),
           ...Directory(
             '../../tool/testing/validation',
           ).listSync().whereType<File>(),
         ]
-        .where((file) => file.path.endsWith('.dart'))
+        .where(
+          (file) =>
+              file.path.endsWith('.dart') &&
+              (file.path == _imageProfileReader) == image,
+        )
         .map((file) => file.readAsStringSync())
         .join('\n');
 
@@ -199,8 +207,22 @@ void main() {
     }
   });
 
-  test('schema declares every profile key lib/src and tool readers index', () {
-    final sources = _readerSources();
+  final imageProfiles = [
+    for (final file in Directory(
+      'assets/image_profiles',
+    ).listSync().whereType<File>())
+      _readJson(file.path),
+  ];
+  // The bundle builder records `execution_path` in the bundled copy; a
+  // device-specific settings profile may add `expected_refusals`, which
+  // `validation_image_profile_test.dart` covers.
+  final imageKeys = {
+    for (final profile in imageProfiles) ...profile.keys,
+    'execution_path',
+    'expected_refusals',
+  };
+
+  Set<String> undeclaredTextKeys(String sources) {
     final topLevel = _literalKeys(sources, [
       'data',
       'profile',
@@ -228,18 +250,52 @@ void main() {
     );
     expect(model, containsAll(['access', 'sha256']));
     expect(target, containsAll(['firebase_model', 'libraries']));
-    expect(topLevel.difference(properties.keys.toSet()), isEmpty);
-    expect(
-      model.difference(
+    return {
+      ...topLevel.difference(properties.keys.toSet()),
+      ...model.difference(
         ((properties['model'] as Map)['properties'] as Map).keys.toSet(),
       ),
-      isEmpty,
-    );
-    expect(
-      target.difference(
+      ...target.difference(
         ((properties['npu_target'] as Map)['properties'] as Map).keys.toSet(),
       ),
-      isEmpty,
+    };
+  }
+
+  Set<String> undeclaredImageKeys(String sources) {
+    final read = _literalKeys(sources, ['profile']);
+    expect(read, containsAll(['suite', 'variants', 'models']));
+    return read.difference(imageKeys);
+  }
+
+  test('schema declares every profile key lib/src and tool readers index', () {
+    expect(undeclaredTextKeys(_readerSources(image: false)), isEmpty);
+  });
+
+  test('shipped image profiles declare every key the image reader indexes', () {
+    expect(imageProfiles, isNotEmpty);
+    expect(undeclaredImageKeys(_readerSources(image: true)), isEmpty);
+  });
+
+  test('a key no profile declares fails both reader scans', () {
+    expect(
+      undeclaredTextKeys(
+        "${_readerSources(image: false)}\nprofile['undeclared_key'];",
+      ),
+      {'undeclared_key'},
+    );
+    expect(
+      undeclaredImageKeys(
+        "${_readerSources(image: true)}\nprofile['undeclared_key'];",
+      ),
+      {'undeclared_key'},
+    );
+    // Text-profile keys are not image-profile keys: moving a text read into
+    // the image reader still fails.
+    expect(
+      undeclaredImageKeys(
+        "${_readerSources(image: true)}\nprofile['enable_thinking'];",
+      ),
+      {'enable_thinking'},
     );
   });
 
