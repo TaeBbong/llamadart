@@ -50,8 +50,12 @@ Map<String, dynamic> _load(
         },
     ],
     'memory': {'peak_bytes': peak},
-  } else
-    'error_message': 'The image model needs about 2.6 GiB',
+  } else ...{
+    'error_type': 'LlamaModelException',
+    'error_message':
+        'The image model needs about 2.6 GiB, but only 2.4 GiB is available. '
+        'Set $imageSettingsMemoryRefusalMarker to false to try anyway.',
+  },
 };
 
 Matcher _rejects(String detail) => throwsA(
@@ -124,12 +128,18 @@ void main() {
   });
 
   group('image settings receipts', () {
+    final png = _png(7);
+    final hash = _hash(png);
+    final refusedVariants = ['sd_turbo_taesd', 'sd_turbo_vae'];
+
     Future<Map<String, dynamic>> write({
       List<Map<String, dynamic>>? loads,
       Map<String, Uint8List>? pngs,
+      List<String>? variants,
+      List<String>? expectedRefusals,
+      int rounds = 1,
+      int measured = 1,
     }) {
-      final png = _png(7);
-      final hash = _hash(png);
       return writeImageSettingsEvidence(
         directory: directory,
         pngs:
@@ -146,20 +156,32 @@ void main() {
             {'filename': 'a.gguf'},
           ],
           'request': {'seed': 42, 'width': 512, 'height': 512},
-          'variants': imageSettingsVariants.keys.toList(),
+          'variants':
+              variants ??
+              (loads == null ? imageSettingsVariants.keys.toList() : ['sdxs']),
+          'expected_refusals':
+              expectedRefusals ?? (loads == null ? refusedVariants : []),
+          'rounds': rounds,
+          'measured_per_load': measured,
           'loads':
               loads ??
               [
                 for (final arm in imageSettingsVariants['sdxs']!)
                   _load('sdxs', arm, hash: hash),
-                for (final variant in ['sd_turbo_taesd', 'sd_turbo_vae'])
+                for (final variant in refusedVariants)
                   _load(variant, 'auto', status: 'refused'),
               ],
         },
       );
     }
 
-    test('verify completed and memory-refused arms', () async {
+    List<Map<String, dynamic>> sdxsLoads({int rounds = 1}) => [
+      for (var round = 0; round < rounds; round++)
+        for (final arm in imageSettingsVariants['sdxs']!)
+          _load('sdxs', arm, round: round, hash: hash),
+    ];
+
+    test('verify completed arms and declared memory refusals', () async {
       final manifest = await write();
       expect(manifest['artifacts'], hasLength(2));
       final verified = verifyImageSettingsEvidence(
@@ -170,6 +192,7 @@ void main() {
         expectedModelLocks: [
           {'filename': 'a.gguf'},
         ],
+        expectedRefusals: refusedVariants,
       );
       expect(
         (verified['summary'] as List).map((row) => (row as Map)['status']),
@@ -177,8 +200,102 @@ void main() {
       );
     });
 
+    test('reject a run whose every variant was refused', () async {
+      await expectLater(
+        write(
+          variants: ['sd_turbo_vae'],
+          expectedRefusals: ['sd_turbo_vae'],
+          pngs: {},
+          loads: [_load('sd_turbo_vae', 'auto', status: 'refused')],
+        ),
+        _rejects('no measured arm'),
+      );
+    });
+
+    test(
+      'reject a refusal the receipt or the profile does not declare',
+      () async {
+        await expectLater(
+          write(expectedRefusals: ['sd_turbo_taesd']),
+          _rejects('undeclared refusal: sd_turbo_vae'),
+        );
+        await write();
+        expect(
+          () => verifyImageSettingsEvidence(
+            directory,
+            expectedRefusals: ['sd_turbo_vae'],
+          ),
+          _rejects('undeclared refusal: sd_turbo_taesd'),
+        );
+        expect(
+          () => verifyImageSettingsEvidence(directory, expectedRefusals: ['x']),
+          _rejects('expected refusals mismatch'),
+        );
+      },
+    );
+
+    test('reject a refusal that is not the memory check', () async {
+      final refusals = <String, List<Map<String, dynamic>>>{
+        'other error': [
+          {
+            ..._load('sd_turbo_vae', 'auto', status: 'refused'),
+            'error_message': 'Out of memory',
+          },
+        ],
+        'other exception': [
+          {
+            ..._load('sd_turbo_vae', 'auto', status: 'refused'),
+            'error_type': 'LlamaException',
+          },
+        ],
+        'more loads after the refusal': [
+          _load('sd_turbo_vae', 'auto', status: 'refused'),
+          _load('sd_turbo_vae', 'both_off', hash: hash),
+        ],
+      };
+      for (final entry in refusals.entries) {
+        await expectLater(
+          write(
+            variants: ['sdxs', 'sd_turbo_vae'],
+            expectedRefusals: ['sd_turbo_vae'],
+            loads: [...sdxsLoads(), ...entry.value],
+          ),
+          _rejects('other than the load-time memory check'),
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('reject a run smaller than its rounds and images per load', () async {
+      await write(loads: sdxsLoads(rounds: 2), rounds: 2);
+      await expectLater(
+        write(loads: sdxsLoads(), rounds: 2),
+        _rejects('run size mismatch: sdxs'),
+      );
+      await expectLater(
+        write(loads: [...sdxsLoads(), sdxsLoads().first]),
+        _rejects('run size mismatch: sdxs'),
+      );
+      await expectLater(
+        write(loads: sdxsLoads(), measured: 2),
+        _rejects('run size mismatch: sdxs'),
+      );
+      await expectLater(
+        write(
+          loads: [
+            ...sdxsLoads(),
+            _load('sd_turbo_vae', 'auto', hash: hash),
+          ],
+        ),
+        _rejects('loads of other variants'),
+      );
+      await expectLater(
+        write(loads: sdxsLoads(), rounds: 0),
+        _rejects('run size missing'),
+      );
+    });
+
     test('reject arms that failed, were skipped or did not run', () async {
-      final hash = _hash(_png(7));
       for (final status in ['failed', 'skipped']) {
         await expectLater(
           write(
@@ -193,15 +310,47 @@ void main() {
       }
       await expectLater(
         write(loads: [_load('sdxs', 'auto', hash: hash)]),
-        _rejects('did not complete'),
+        _rejects('run size mismatch'),
+      );
+    });
+
+    test('reject an arm whose loads disagree on the image', () async {
+      await expectLater(
+        write(
+          rounds: 2,
+          loads: [
+            ...sdxsLoads(),
+            _load('sdxs', 'auto', round: 1, hash: _hash(_png(8))),
+            _load('sdxs', 'both_off', round: 1, hash: hash),
+          ],
+        ),
+        _rejects('sdxs/auto did not complete deterministically (ok)'),
       );
     });
 
     test('reject a missing, altered or unexpected PNG', () async {
       await write();
-      File(
+      final auto = File(
         p.join(directory.path, imageSettingsArtifactName('sdxs', 'auto')),
-      ).writeAsBytesSync(_png(8));
+      )..writeAsBytesSync(_png(8));
+      expect(
+        () => verifyImageSettingsEvidence(directory),
+        _rejects('PNG identity mismatch'),
+      );
+      // The receipt's artifact entry alone does not vouch for the bytes: a
+      // replaced PNG must also be the arm's generated image.
+      final receipt = File(p.join(directory.path, imageSettingsReceiptName));
+      final manifest = jsonDecode(receipt.readAsStringSync()) as Map;
+      (manifest['artifacts'] as Map)[imageSettingsArtifactName(
+        'sdxs',
+        'auto',
+      )] = {
+        'bytes': auto.lengthSync(),
+        'sha256': _hash(auto.readAsBytesSync()),
+        'width': 512,
+        'height': 512,
+      };
+      receipt.writeAsStringSync(jsonEncode(manifest));
       expect(
         () => verifyImageSettingsEvidence(directory),
         _rejects('PNG identity mismatch'),

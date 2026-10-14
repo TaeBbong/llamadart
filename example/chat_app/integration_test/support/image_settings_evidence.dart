@@ -38,6 +38,10 @@ const Map<String, List<String>> imageSettingsVariants = {
   'sd_turbo_vae': ['auto', 'both_off', 'vae_direct_off'],
 };
 
+/// What the load-time memory check's refusal names; a `refused` load whose
+/// error does not name it is not a memory-check refusal.
+const String imageSettingsMemoryRefusalMarker = 'ImageModelParams.checkMemory';
+
 /// The evidence PNG of one arm: its first image.
 String imageSettingsArtifactName(String variant, String arm) =>
     '${variant}__$arm.png';
@@ -222,9 +226,12 @@ Future<Map<String, dynamic>> writeImageSettingsEvidence({
 }
 
 /// Verifies a receipt in [directory]: the summary must be the one its loads
-/// give, every arm must have generated (or been refused by the load-time
-/// memory check), and every generating arm's PNG must be present with the
-/// recorded bytes, the arm's image hash, and the requested size. The
+/// give, every variant must have loaded each arm once per round with
+/// `measured_per_load` images per completed load, or been refused once by
+/// the load-time memory check when [expectedRefusals] (the receipt's
+/// `expected_refusals` when omitted) allows that variant, at least one arm
+/// must have measured, and every generating arm's PNG must be present with
+/// the recorded bytes, the arm's image hash, and the requested size. The
 /// optional expectations qualify it against a build: clean source
 /// [expectedCommit], the backend every load reported, the runtime pin, the
 /// model locks and the variants the build runs. PNG checks are structural;
@@ -236,6 +243,7 @@ Map<String, dynamic> verifyImageSettingsEvidence(
   String? expectedRuntimeTag,
   List<Map<String, dynamic>>? expectedModelLocks,
   List<String>? expectedVariants,
+  List<String>? expectedRefusals,
 }) {
   final manifest =
       jsonDecode(
@@ -289,6 +297,60 @@ Map<String, dynamic> verifyImageSettingsEvidence(
           jsonEncode(variants) != jsonEncode(expectedVariants))) {
     throw const FormatException('Image settings variants mismatch');
   }
+  final allowedRefusals = expectedRefusals ?? manifest['expected_refusals'];
+  if (allowedRefusals != null &&
+      (allowedRefusals is! List || !allowedRefusals.every(variants.contains))) {
+    throw const FormatException('Image settings expected refusals mismatch');
+  }
+  final rounds = manifest['rounds'];
+  final measured = manifest['measured_per_load'];
+  if (rounds is! int || rounds < 1 || measured is! int || measured < 1) {
+    throw const FormatException('Image settings run size missing');
+  }
+  final refusals = <String>{};
+  for (final variant in variants) {
+    final own = loads.where((load) => load['variant'] == variant).toList();
+    final refused = own.where((load) => load['status'] == 'refused').toList();
+    if (refused.isNotEmpty) {
+      // A refusal stops its variant: the test loads none of its other arms.
+      if (own.length != 1 ||
+          own.single['error_type'] != 'LlamaModelException' ||
+          !'${own.single['error_message']}'.contains(
+            imageSettingsMemoryRefusalMarker,
+          )) {
+        throw FormatException(
+          'Image settings variant $variant was refused by something other '
+          'than the load-time memory check',
+        );
+      }
+      refusals.add(variant as String);
+      continue;
+    }
+    final arms = imageSettingsVariants[variant]!;
+    final slots = {for (final load in own) '${load['arm']}@${load['round']}'};
+    final expectedSlots = {
+      for (var round = 0; round < rounds; round++)
+        for (final arm in arms) '$arm@$round',
+    };
+    if (own.length != expectedSlots.length ||
+        slots.length != own.length ||
+        !slots.containsAll(expectedSlots) ||
+        own.any(
+          (load) =>
+              load['status'] == 'ok' &&
+              (load['generations'] as List).length != measured,
+        )) {
+      throw FormatException(
+        'Image settings run size mismatch: $variant needs ${arms.length} '
+        'arms x $rounds rounds with $measured images per load',
+      );
+    }
+  }
+  if (loads.any((load) => !variants.contains(load['variant']))) {
+    throw const FormatException(
+      'Image settings receipt holds loads of other variants',
+    );
+  }
   final summary = summarizeImageSettingsLoads(loads, [
     for (final variant in variants) variant as String,
   ]);
@@ -298,6 +360,16 @@ Map<String, dynamic> verifyImageSettingsEvidence(
   ];
   if (jsonEncode(recorded) != jsonEncode(summary)) {
     throw const FormatException('Image settings summary does not match loads');
+  }
+  if (!summary.any((row) => row['status'] == 'ok')) {
+    throw const FormatException('Image settings run has no measured arm');
+  }
+  final undeclared = refusals.difference({...?(allowedRefusals as List?)});
+  if (undeclared.isNotEmpty) {
+    throw FormatException(
+      'Image settings undeclared refusal: ${undeclared.join(', ')} '
+      '(a profile lists variants its device may refuse in expected_refusals)',
+    );
   }
   final artifacts = manifest['artifacts'] as Map<String, dynamic>;
   final expectedArtifacts = <String>{};

@@ -983,7 +983,10 @@ void main() {
         ],
         [
           for (final (variants, size) in [
-            ('sdxs,sd_turbo_taesd', <String>[]),
+            (
+              'sdxs,sd_turbo_taesd',
+              ['IMAGE_SETTINGS_EXPECTED_REFUSALS=sd_turbo_taesd'],
+            ),
             ('sd_turbo_vae', <String>[]),
             ('sdxs', <String>[]),
             ('sd_turbo_taesd', <String>[]),
@@ -1025,6 +1028,11 @@ void main() {
         'zero rounds': (v) => v['rounds'] = 0,
         'too many rounds': (v) => v['rounds'] = 5,
         'text measured count': (v) => v['measured_per_load'] = '1',
+        'refusal of another variant': (v) =>
+            v['expected_refusals'] = ['sd_turbo_vae'],
+        'empty refusals': (v) => v['expected_refusals'] = <String>[],
+        'repeated refusal': (v) => v['expected_refusals'] = ['sdxs', 'sdxs'],
+        'text refusals': (v) => v['expected_refusals'] = 'sdxs',
         'native path': (v) => v['execution_path'] = 'native_c_api',
       };
       for (final entry in mutations.entries) {
@@ -1098,15 +1106,17 @@ void main() {
         String backend = 'CPU',
         String commit = _commit,
         List<String> variants = const ['sdxs', 'sd_turbo_taesd'],
-        Map<String, int> runSize = const {},
+        Map<String, int> runSize = const {'rounds': 1, 'measured_per_load': 1},
+        List<String> refused = const [],
       }) async {
         final hash = sha256.convert(png).toString();
         await writeImageSettingsEvidence(
           directory: directory,
           pngs: {
             for (final variant in variants)
-              for (final arm in imageSettingsVariants[variant]!)
-                imageSettingsArtifactName(variant, arm): png,
+              if (!refused.contains(variant))
+                for (final arm in imageSettingsVariants[variant]!)
+                  imageSettingsArtifactName(variant, arm): png,
           },
           receipt: {
             'source_commit': commit,
@@ -1121,15 +1131,27 @@ void main() {
             ],
             'request': {'seed': 42, 'width': 512, 'height': 512},
             'variants': variants,
+            'expected_refusals': refused,
             ...runSize,
             'loads': [
               for (final MapEntry(key: variant, value: arms)
                   in imageSettingsVariants.entries)
-                if (variants.contains(variant))
+                if (refused.contains(variant))
+                  {
+                    'variant': variant,
+                    'arm': arms.first,
+                    'round': 0,
+                    'status': 'refused',
+                    'error_type': 'LlamaModelException',
+                    'error_message':
+                        'Set $imageSettingsMemoryRefusalMarker to false',
+                  }
+                else if (variants.contains(variant))
                   for (final arm in arms)
                     {
                       'variant': variant,
                       'arm': arm,
+                      'round': 0,
                       'status': 'ok',
                       'backend': backend,
                       'load_ms': 1,
@@ -1180,6 +1202,41 @@ void main() {
         expect(verdict()['evidence']['summary'], hasLength(4));
         expect(verdict()['expected']['variants'], ['sdxs', 'sd_turbo_taesd']);
         expect(verdict()['expected']['model_locks'], hasLength(3));
+        expect(verdict()['expected']['expected_refusals'], ['sd_turbo_taesd']);
+      });
+
+      test('verifies a declared refusal, not an undeclared one or a run '
+          'without a measured arm', () async {
+        await sealBundle('image-settings-cpu');
+        await write(pulledRun('run-1'), refused: ['sd_turbo_taesd']);
+        expect(await assess(plan('image-settings-cpu')), isTrue);
+
+        for (final (profile, variants, refused, reason) in [
+          (
+            'image-settings-cpu',
+            ['sdxs', 'sd_turbo_taesd'],
+            ['sdxs'],
+            'undeclared refusal: sdxs',
+          ),
+          (
+            'image-settings-cpu-vae',
+            ['sd_turbo_vae'],
+            ['sd_turbo_vae'],
+            'no measured arm',
+          ),
+        ]) {
+          run.deleteSync(recursive: true);
+          run.createSync();
+          await sealBundle(profile);
+          // The device-side check uses the receipt's own declaration and
+          // rejects a run without a measured arm before grading.
+          await expectLater(
+            write(pulledRun('run-1'), variants: variants, refused: refused),
+            reason == 'no measured arm' ? throwsFormatException : completes,
+          );
+          expect(await assess(plan(profile)), isFalse, reason: profile);
+          expect(verdict()['reason'], contains(reason));
+        }
       });
 
       test(
@@ -1199,7 +1256,7 @@ void main() {
               () async {
                 await sealBundle(
                   'image-settings-cpu',
-                  editProfile: (profile) => profile['rounds'] = 1,
+                  editProfile: (profile) => profile['rounds'] = 2,
                 );
                 await write(pulledRun('run-1'));
               },

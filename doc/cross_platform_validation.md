@@ -777,7 +777,10 @@ SD-Turbo with and without TAESD, with time per image and peak memory per arm
 ([#805](https://github.com/leehack/llamadart/issues/805); see the chat app
 README). Their `variants` list is compiled in as `IMAGE_SETTINGS_VARIANTS`
 and must match the receipt, as must the optional `rounds` and
-`measured_per_load`. The variants are split over several runs to stay
+`measured_per_load`. The optional `expected_refusals` lists the variants its
+devices may see refused by the load-time memory check
+(`IMAGE_SETTINGS_EXPECTED_REFUSALS`); `image-settings-cpu` lists
+`sd_turbo_taesd`, which a Galaxy A53 refuses. The variants are split over several runs to stay
 inside a 20-minute Test Lab run on Android, and on iOS inside the few minutes
 an XCTest run tolerates before its first test case (see the chat app README). They live outside
 `assets/profiles/` because that directory is bundled into the QA app and every
@@ -820,9 +823,13 @@ commit, the profile's backend device (`CPU` or `MTL0`), the bundle's
 both PNGs structurally valid and matching the receipt's sizes and SHA256.
 A settings receipt is graded by `verifyImageSettingsEvidence` against the
 same identity and the profile's three model locks: its summary must be the one
-its per-load records give, every arm must have generated deterministically or
-been refused by the load-time memory check, and each generating arm's 512x512
-PNG must match the arm's image hash. `report/image-verdict.json` then carries
+its per-load records give, every variant must have loaded each arm once per
+round with `measured_per_load` images per load, or been refused once by the
+load-time memory check (a `LlamaModelException` naming
+`ImageModelParams.checkMemory`) when the profile's `expected_refusals` lists
+it, at least one arm must have measured, every measured arm must be
+deterministic, and each generating arm's 512x512 PNG must match the arm's
+image hash. `report/image-verdict.json` then carries
 the summary table (`kind` `image_settings_comparison`).
 As for text profiles, the run qualifies only if the provider outcome is also
 SUCCESS and cleanup is verified. PNG checks are structural; they do not judge

@@ -20,7 +20,8 @@
 /// and the peak memory from load to dispose: the kernel peak reset at the
 /// load where the platform allows it (Android `VmHWM`, Apple
 /// `ri_interval_max_phys_footprint`), otherwise a 20 ms sampled peak. A
-/// model the load-time memory check refuses is recorded as refused.
+/// model the load-time memory check refuses is recorded as refused, and a
+/// run must measure at least one arm.
 ///
 /// Every record is logged as an `IMAGE_SETTINGS {json}` line and appended to
 /// `image_settings/run-*/journal.jsonl` (app external files on Android, the
@@ -37,7 +38,9 @@
 /// ```
 ///
 /// `IMAGE_SETTINGS_DEVICE` is `auto` (default) or `cpu`;
-/// `IMAGE_SETTINGS_VARIANTS` is a comma-separated subset of the variants.
+/// `IMAGE_SETTINGS_VARIANTS` is a comma-separated subset of the variants;
+/// `IMAGE_SETTINGS_EXPECTED_REFUSALS` lists those the memory check may
+/// refuse on the device (any other refusal fails the receipt).
 library;
 
 import 'dart:convert';
@@ -76,6 +79,9 @@ const _deviceDefine = String.fromEnvironment(
   defaultValue: 'auto',
 );
 const _variantsDefine = String.fromEnvironment('IMAGE_SETTINGS_VARIANTS');
+const _expectedRefusalsDefine = String.fromEnvironment(
+  'IMAGE_SETTINGS_EXPECTED_REFUSALS',
+);
 const _downloadAttempts = 3;
 
 /// Phone CPUs take 5 to 50 s per image, so they time one image per load to
@@ -159,6 +165,10 @@ void main() {
       'runtime_backend': runtime.backendName,
       'device': _deviceDefine,
       'variants': variants,
+      'expected_refusals': [
+        if (_expectedRefusalsDefine.isNotEmpty)
+          ..._expectedRefusalsDefine.split(',').map((value) => value.trim()),
+      ],
       'rounds': _rounds,
       'measured_per_load': _measured,
       'budget_minutes': _budgetMinutes,
@@ -281,7 +291,9 @@ void main() {
             pngs.putIfAbsent(key, () => images.first.png);
             pixels.putIfAbsent('${variant}__$arm', () => images.first.pixels);
           } on LlamaModelException catch (error) {
-            final memoryRefusal = error.message.contains('checkMemory');
+            final memoryRefusal = error.message.contains(
+              imageSettingsMemoryRefusalMarker,
+            );
             load['status'] = memoryRefusal ? 'refused' : 'failed';
             load['error_type'] = '${error.runtimeType}';
             load['error_message'] = error.message;

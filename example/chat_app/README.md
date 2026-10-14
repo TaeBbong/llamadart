@@ -959,8 +959,16 @@ backend and the peak memory from load to dispose: Apple `phys_footprint` peak re
 `proc_reset_footprint_interval` (it includes Metal buffers), Android `VmHWM`
 reset through `/proc/self/clear_refs` where the app may write it, each with a
 20 ms sampled peak of the current figure beside it, which is the peak used
-when the reset is refused (as on a Galaxy S24 with Android 16). A model that the load-time memory check refuses is
-recorded as refused for all its arms.
+when the reset is refused. Test Lab refused it on all three phones (Galaxy
+S24 and Galaxy A53 with Android 16, Pixel 9 Pro with Android 15), so their
+peaks are the 20 ms sampled `VmRSS`. A model that the load-time memory check
+refuses is recorded as refused for all its arms. A refusal verifies only when
+it names `ImageModelParams.checkMemory` and the run lists the variant in
+`IMAGE_SETTINGS_EXPECTED_REFUSALS` (a profile's `expected_refusals`), and a
+run must measure at least one arm. `image-settings-cpu` lists SD-Turbo with
+TAESD, which the Galaxy A53 refuses (2.9 GiB needed, 2.5 GiB available): its
+SD-Turbo rows are refusals, not measurements, and its all-refused
+`image-settings-cpu-vae` run does not verify.
 
 ```text
 IMAGE_SETTINGS {"type":"config",...}
@@ -972,7 +980,7 @@ Each record is also appended to `image_settings/run-*/journal.jsonl` (app
 external files on Android, the temporary directory elsewhere); the end writes
 `image_settings.json` with the summary and one PNG per arm, and verifies them.
 The test fails when an arm fails, gives different images for the same seed,
-or does not start within `IMAGE_SETTINGS_BUDGET_MINUTES` (16).
+misses a round or an image, or does not start within `IMAGE_SETTINGS_BUDGET_MINUTES` (16).
 `IMAGE_SETTINGS_DEVICE=cpu` measures the CPU on a Mac, and
 `IMAGE_SETTINGS_VARIANTS` runs a comma-separated subset.
 
@@ -993,10 +1001,12 @@ run (`image-settings-metal` for SDXS, `image-settings-metal-taesd`,
 suite before XCTest reports a test case, and three iPhone 16 Pro runs of all
 three variants, about 10 minutes of Dart each, ended in Test Lab
 infrastructure errors with no result, while a 3.5-minute image test passes. A profile can also set `rounds` and `measured_per_load`
-(compiled in as `IMAGE_SETTINGS_ROUNDS` and `IMAGE_SETTINGS_MEASURED`);
-`image-settings-metal-vae` uses one of each, because a two-round full-VAE run
-also ended in infrastructure errors
-([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
+(compiled in as `IMAGE_SETTINGS_ROUNDS` and `IMAGE_SETTINGS_MEASURED`).
+A two-round full-VAE run also ended in infrastructure errors;
+`image-settings-metal-vae` sets one of each as the configuration to retry,
+and it has not produced evidence yet
+([#1033](https://github.com/leehack/llamadart/issues/1033);
+[image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
 
 #### Micro-batch sweep and the Android Vulkan prompt cap
 

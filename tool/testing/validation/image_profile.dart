@@ -59,12 +59,15 @@ String imageProfileTestTarget(Map<dynamic, dynamic> profile) =>
     : imageGenerationTestTarget;
 
 /// The dart-defines an image [profile]'s bundle adds: a settings profile
-/// names the variants its run compares, and downloads its models in
+/// names the variants its run compares and those its device class may see
+/// refused by the memory check, and downloads its models in
 /// parallel ranges: Test Lab devices fetch one Hugging Face connection at a
 /// few MB/s, which took SD-Turbo 7 to 12 minutes of a 20-minute run.
 List<String> imageProfileDefines(Map<dynamic, dynamic> profile) => [
   if (isImageSettingsProfile(profile)) ...[
     'IMAGE_SETTINGS_VARIANTS=${(profile['variants'] as List).join(',')}',
+    if (profile['expected_refusals'] case final List refusals)
+      'IMAGE_SETTINGS_EXPECTED_REFUSALS=${refusals.join(',')}',
     for (final (key, define) in _runSizeDefines)
       if (profile[key] case final int value) '$define=$value',
     'LLAMADART_CHAT_PARALLEL_DOWNLOAD=true',
@@ -155,6 +158,8 @@ void requireImageGenerationProfile(
         if (profile.containsKey('execution_path')) 'execution_path',
         for (final (key, _) in _runSizeDefines)
           if (settings && profile.containsKey(key)) key,
+        if (settings && profile.containsKey('expected_refusals'))
+          'expected_refusals',
       ]) &&
       _runSizeDefines.every(
         (entry) =>
@@ -164,13 +169,19 @@ void requireImageGenerationProfile(
                 (profile[entry.$1] as int) <= 4),
       );
   final variants = profile['variants'];
+  final refusals = profile['expected_refusals'];
   if (!shapeValid ||
       !(settings
           ? _locksAll(profile['models'], imageSettingsModelLocks()) &&
                 variants is List &&
                 variants.isNotEmpty &&
                 variants.toSet().length == variants.length &&
-                variants.every(imageSettingsVariants.containsKey)
+                variants.every(imageSettingsVariants.containsKey) &&
+                (refusals == null ||
+                    (refusals is List &&
+                        refusals.isNotEmpty &&
+                        refusals.toSet().length == refusals.length &&
+                        refusals.every(variants.contains)))
           : _locks(profile['model'], sdxsModelLock()))) {
     throw FormatException(
       settings
@@ -179,7 +190,8 @@ void requireImageGenerationProfile(
                 'stable_diffusion, backend, suite $imageSettingsSuite, '
                 'variants of ${imageSettingsVariants.keys.join(', ')}, '
                 'models with kind image, and optionally rounds and '
-                'measured_per_load from 1 to 4'
+                'measured_per_load from 1 to 4 and expected_refusals of its '
+                'variants'
           : 'Image-generation profiles lock the chat app SDXS model exactly: '
                 'schema_version, id, runtime stable_diffusion, backend and a '
                 'model with kind image',
@@ -240,7 +252,8 @@ String readStableDiffusionTag(String root) {
 /// device, the bundle's runtime tag and model lock, seed 42, 512x512 and
 /// structurally valid PNGs whose bytes match the receipt. A settings
 /// comparison profile is graded by `verifyImageSettingsEvidence` instead,
-/// against the same identity and its model locks.
+/// against the same identity, its model locks and the refusals the profile
+/// declares in `expected_refusals`.
 ///
 /// Android evidence is the pulled `image_generation_e2e/run-*` (or
 /// `image_settings/run-*`) directory. iOS evidence is the XCTest attachments
@@ -263,6 +276,7 @@ bool gradeCollectedImageRun(
     'backend': _imageBackends[profile['backend']]?.device,
     'runtime_tag': bundle['stable_diffusion_tag'],
     if (settings) 'variants': profile['variants'],
+    if (settings) 'expected_refusals': profile['expected_refusals'] ?? [],
     if (settings)
       for (final (key, _) in _runSizeDefines)
         if (profile.containsKey(key)) key: profile[key],
@@ -308,6 +322,10 @@ bool gradeCollectedImageRun(
         ],
         expectedVariants: [
           for (final variant in expected['variants'] as List) variant as String,
+        ],
+        expectedRefusals: [
+          for (final variant in expected['expected_refusals'] as List)
+            variant as String,
         ],
       );
       for (final (key, _) in _runSizeDefines) {
