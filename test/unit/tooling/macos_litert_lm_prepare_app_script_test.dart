@@ -1,6 +1,7 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
@@ -46,10 +47,81 @@ void main() {
       expect(flutterEmbed, greaterThanOrEqualTo(0));
       expect(prepareRuntime, greaterThan(flutterEmbed));
       expect(project, contains('macos_assemble.sh embed'));
-      expect(project, contains('tool/macos_litert_lm_prepare_app.sh'));
-      expect(project, contains(r'if [ -f \"$SCRIPT\" ]'));
-      expect(project, contains(r'bash \"$SCRIPT\"'));
+      expect(project, isNot(contains('../../../tool/')));
+      expect(
+        _pbxprojShellScript(project, 'Prepare LiteRT-LM Runtime'),
+        _documentedBuildPhase(_installationDocs.first),
+      );
     });
+
+    for (final docs in _installationDocs) {
+      test('$docs build phase runs the resolved package script', () async {
+        final script = _documentedBuildPhase(docs);
+        final root = await Directory.systemTemp.createTemp(
+          'litert_prepare_docs_',
+        );
+        addTearDown(() => root.delete(recursive: true));
+
+        final workspace = Directory(path.join(root.path, 'my workspace'));
+        final package = Directory(
+          path.join(workspace.path, 'packages', 'llama dart'),
+        );
+        final prepare = File(
+          path.join(package.path, 'tool', 'macos_litert_lm_prepare_app.sh'),
+        );
+        await prepare.parent.create(recursive: true);
+        await prepare.writeAsString('echo "PREPARE \$1"\n');
+        final config = File(
+          path.join(workspace.path, '.dart_tool', 'package_config.json'),
+        );
+        await config.parent.create(recursive: true);
+        final project = Directory(
+          path.join(workspace.path, 'apps', 'my app', 'macos'),
+        );
+        await project.create(recursive: true);
+
+        Future<ProcessResult> run() => Process.run(
+          'bash',
+          ['-c', script],
+          environment: {
+            'PROJECT_DIR': project.path,
+            'TARGET_BUILD_DIR': path.join(root.path, 'Build'),
+            'WRAPPER_NAME': 'My App.app',
+          },
+        );
+        final appPath = path.join(root.path, 'Build', 'My App.app');
+
+        for (final rootUri in [
+          '../packages/llama%20dart/',
+          Uri.directory(package.path).toString(),
+        ]) {
+          await config.writeAsString(
+            jsonEncode({
+              'configVersion': 2,
+              'packages': [
+                {'name': 'meta', 'rootUri': 'file:///unused/'},
+                {'name': 'llamadart', 'rootUri': rootUri},
+              ],
+            }),
+          );
+          final result = await run();
+          expect(result.exitCode, 0, reason: '$rootUri: ${result.stderr}');
+          expect(result.stdout, contains('PREPARE $appPath'));
+        }
+
+        await config.writeAsString(
+          jsonEncode({'configVersion': 2, 'packages': <Object>[]}),
+        );
+        final unresolved = await run();
+        expect(unresolved.exitCode, 1);
+        expect(unresolved.stderr, contains('llamadart is not resolved'));
+
+        await config.delete();
+        final missing = await run();
+        expect(missing.exitCode, 1);
+        expect(missing.stderr, contains('run flutter pub get'));
+      }, skip: Platform.isMacOS ? false : 'requires macOS plutil');
+    }
 
     test('rejects incomplete explicit arm64 runtime directories', () async {
       final root = await Directory.systemTemp.createTemp(
@@ -260,6 +332,35 @@ void main() {
       }
     }, skip: Platform.isWindows ? 'requires bash and POSIX symlinks' : false);
   });
+}
+
+const _installationDocs = [
+  'website/docs/getting-started/installation.md',
+  'website/versioned_docs/version-0.12.0/getting-started/installation.md',
+];
+
+/// The `bash` block of the Flutter macOS LiteRT-LM build phase section.
+String _documentedBuildPhase(String docsPath) {
+  final docs = File(docsPath).readAsStringSync();
+  final section = docs.indexOf('### Flutter macOS LiteRT-LM build phase');
+  expect(section, greaterThanOrEqualTo(0), reason: docsPath);
+  final start = docs.indexOf('```bash\n', section) + '```bash\n'.length;
+  return docs.substring(start, docs.indexOf('```', start));
+}
+
+/// Decodes the `shellScript` of the named `PBXShellScriptBuildPhase`.
+String _pbxprojShellScript(String project, String phaseName) {
+  final phase = project.indexOf('name = "$phaseName";');
+  expect(phase, greaterThanOrEqualTo(0), reason: phaseName);
+  final match = RegExp(
+    r'shellScript = "((?:[^"\\]|\\.)*)";',
+  ).firstMatch(project.substring(phase))!;
+  return match
+      .group(1)!
+      .replaceAllMapped(
+        RegExp(r'\\(.)'),
+        (escape) => escape[1] == 'n' ? '\n' : escape[1]!,
+      );
 }
 
 Future<ProcessResult> _runPrepareApp(

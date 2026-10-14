@@ -62,7 +62,8 @@ and `0.11.0`. The build checks the
 resolved llama.cpp and stable_diffusion companions' runtime pins and fails on
 a mismatch or on an unverified local `Artifacts` override; resolve the
 matching companion and rerun `flutter pub get`. Flutter macOS LiteRT-LM builds
-still use the core package's native-assets runtime rather than SwiftPM.
+still use the core package's native-assets runtime rather than SwiftPM, and
+need the [build phase below](#flutter-macos-litert-lm-build-phase).
 
 Pair `llamadart_stable_diffusion_flutter` `0.0.3` with core `0.12.0`. Keep
 `0.0.2` with core `0.11.1` and `0.11.0`, and `0.0.1` with core `0.10.0`;
@@ -87,6 +88,68 @@ manifests from `litert-lm-native` `v0.17.0-8`; an app that runs LiteRT-LM on
 the hook path, or whose embedded LiteRT-LM frameworks have none, declares that
 runtime's three categories itself. Copy the categories and codes from
 [Apple privacy manifest](../platforms/native-build-hooks#apple-privacy-manifest).
+
+### Flutter macOS LiteRT-LM build phase
+
+A Flutter macOS app does not get the LiteRT-LM runtime in its bundle, with or
+without `llamadart_litert_lm_flutter`. The build hook leaves the libraries in
+its cache inside the resolved `llamadart` package, and the app loads them from
+there only when it runs unsandboxed, on the build machine, from inside the
+project. Under the App Sandbox, which `flutter create` turns on, and in any
+copied or distributed app, the first LiteRT-LM generation on CPU or GPU throws
+`Failed to load dynamic library 'libLiteRt.dylib'`
+([#1029](https://github.com/leehack/llamadart/issues/1029)). llama.cpp is not
+affected.
+
+Add a build phase that copies the runtime into the app:
+
+1. Open `macos/Runner.xcworkspace` in Xcode and select the **Runner** target.
+2. In **Build Phases**, add a **New Run Script Phase** and drag it to the end
+   of the list, after **Bundle Framework** and Flutter's own script phase.
+3. Set **Shell** to `/bin/bash`, clear **Based on dependency analysis**, and
+   paste:
+
+```bash
+set -euo pipefail
+config=
+dir="$PROJECT_DIR"
+while [ "$dir" != / ]; do
+  if [ -f "$dir/.dart_tool/package_config.json" ]; then
+    config="$dir/.dart_tool/package_config.json"
+    break
+  fi
+  dir="$(dirname "$dir")"
+done
+if [ -z "$config" ]; then
+  echo "error: no .dart_tool/package_config.json above $PROJECT_DIR; run flutter pub get" >&2
+  exit 1
+fi
+root=
+count="$(plutil -extract packages raw -o - "$config")"
+for ((i = 0; i < count; i++)); do
+  if [ "$(plutil -extract "packages.$i.name" raw -o - "$config")" = llamadart ]; then
+    root="$(plutil -extract "packages.$i.rootUri" raw -o - "$config")"
+    break
+  fi
+done
+if [ -z "$root" ]; then
+  echo "error: llamadart is not resolved in $config" >&2
+  exit 1
+fi
+case "$root" in
+  file://*) root="${root#file://}" ;;
+  *) root="$(dirname "$config")/$root" ;;
+esac
+root="$(printf '%b' "${root//%/\\x}")"
+bash "$root/tool/macos_litert_lm_prepare_app.sh" "$TARGET_BUILD_DIR/$WRAPPER_NAME"
+```
+
+The script finds the resolved `llamadart` package through
+`.dart_tool/package_config.json`, so it works for hosted, path and git
+dependencies and in pub workspaces, and runs that package's
+`tool/macos_litert_lm_prepare_app.sh`. That script copies the libraries for
+the build Mac's architecture only into `Contents/Frameworks/LiteRtLmRuntime`
+and signs them with the build's signing identity.
 
 ## Web
 
@@ -120,7 +183,8 @@ On the first `dart run` / `flutter run` for a native target, `llamadart`:
    `leehack/litert-lm-native`.
 3. Wires them into your app through native assets. Flutter iOS builds use
    SwiftPM-linked XCFrameworks when the matching companion packages are present;
-   Flutter macOS LiteRT-LM can fall back to hook-managed native assets. The
+   Flutter macOS LiteRT-LM keeps its libraries in the hook cache and needs the
+   [build phase](#flutter-macos-litert-lm-build-phase) in the app. The
    opt-in image generation runtime comes from `leehack/stable-diffusion-native`
    the same way.
 

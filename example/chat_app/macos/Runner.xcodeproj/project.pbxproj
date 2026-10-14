@@ -349,7 +349,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -euo pipefail\nSCRIPT=\"$PROJECT_DIR/../../../tool/macos_litert_lm_prepare_app.sh\"\nif [ -f \"$SCRIPT\" ]; then\n  bash \"$SCRIPT\" \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\nelse\n  echo \"warning: LiteRT-LM prepare script not found: $SCRIPT\" >&2\nfi\n";
+			shellScript = "set -euo pipefail\nconfig=\ndir=\"$PROJECT_DIR\"\nwhile [ \"$dir\" != / ]; do\n  if [ -f \"$dir/.dart_tool/package_config.json\" ]; then\n    config=\"$dir/.dart_tool/package_config.json\"\n    break\n  fi\n  dir=\"$(dirname \"$dir\")\"\ndone\nif [ -z \"$config\" ]; then\n  echo \"error: no .dart_tool/package_config.json above $PROJECT_DIR; run flutter pub get\" >&2\n  exit 1\nfi\nroot=\ncount=\"$(plutil -extract packages raw -o - \"$config\")\"\nfor ((i = 0; i < count; i++)); do\n  if [ \"$(plutil -extract \"packages.$i.name\" raw -o - \"$config\")\" = llamadart ]; then\n    root=\"$(plutil -extract \"packages.$i.rootUri\" raw -o - \"$config\")\"\n    break\n  fi\ndone\nif [ -z \"$root\" ]; then\n  echo \"error: llamadart is not resolved in $config\" >&2\n  exit 1\nfi\ncase \"$root\" in\n  file://*) root=\"${root#file://}\" ;;\n  *) root=\"$(dirname \"$config\")/$root\" ;;\nesac\nroot=\"$(printf '%b' \"${root//%/\\\\x}\")\"\nbash \"$root/tool/macos_litert_lm_prepare_app.sh\" \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
