@@ -6,14 +6,23 @@ APP_PATH="${1:?usage: $0 /path/to/App.app}"
 FRAMEWORKS_DIR="$APP_PATH/Contents/Frameworks"
 RUNTIME_DIR="$FRAMEWORKS_DIR/LiteRtLmRuntime"
 
+# The arm64 slice of a universal build needs the runtime even on an Intel
+# build Mac, so Xcode's ARCHS decides before the host does.
 resolve_litert_arch() {
-  local arch="${LLAMADART_LITERT_LM_ARCH:-$(uname -m)}"
+  local arch="${LLAMADART_LITERT_LM_ARCH:-}"
+  if [[ -z "$arch" && -n "${ARCHS:-}" ]]; then
+    case " $ARCHS " in
+      *" arm64 "*) arch="arm64" ;;
+      *) arch="$ARCHS" ;;
+    esac
+  fi
+  arch="${arch:-$(uname -m)}"
   case "$arch" in
     arm64 | aarch64)
       echo "arm64"
       ;;
     x64 | x86_64 | amd64)
-      echo "x64"
+      echo "x86_64"
       ;;
     *)
       echo "Unsupported LiteRT-LM macOS architecture: $arch" >&2
@@ -23,6 +32,11 @@ resolve_litert_arch() {
 }
 
 LITERT_ARCH="$(resolve_litert_arch)"
+
+if [[ "$LITERT_ARCH" == x86_64 ]]; then
+  echo "warning: LiteRT-LM is not available on macOS x86_64: litert-lm-native publishes arm64-only macOS runtimes (leehack/litert-lm-native#72). This x86_64-only build gets no LiteRT-LM runtime." >&2
+  exit 0
+fi
 
 required_libraries() {
   case "$LITERT_ARCH" in
@@ -38,12 +52,6 @@ required_libraries() {
         "libLiteRtTopKWebGpuSampler.dylib" \
         "libLiteRtWebGpuAccelerator.dylib" \
         "libwebgpu_dawn.dylib"
-      ;;
-    x64)
-      printf '%s
-' \
-        "libCLiteRTLM_mac.dylib" \
-        "libLiteRtLm.dylib"
       ;;
   esac
 }
@@ -87,12 +95,6 @@ required_native_spm_files() {
         "libLiteRtWebGpuAccelerator.dylib" \
         "libwebgpu_dawn.dylib"
       ;;
-    x64)
-      printf '%s
-' \
-        "LiteRtLm.framework/Versions/A/LiteRtLm" \
-        "libCLiteRTLM_mac.dylib"
-      ;;
   esac
 }
 
@@ -118,8 +120,8 @@ resolve_litert_dir() {
   fi
 
   local candidates=(
-    "$ROOT_DIR/.dart_tool/llamadart/litert_lm/0.18.0/macos_$LITERT_ARCH"
-    "$ROOT_DIR/.dart_tool/llamadart/litert_lm/0.18.0/macos/$LITERT_ARCH"
+    "$ROOT_DIR/.dart_tool/llamadart/litert_lm/0.18.0-1/macos_$LITERT_ARCH"
+    "$ROOT_DIR/.dart_tool/llamadart/litert_lm/0.18.0-1/macos/$LITERT_ARCH"
   )
   local candidate
   for candidate in "${candidates[@]}"; do

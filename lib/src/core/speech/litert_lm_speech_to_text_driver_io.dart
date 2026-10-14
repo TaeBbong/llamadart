@@ -42,6 +42,15 @@ class _IoLiteRtLmSpeechToTextDriver implements LiteRtLmSpeechToTextDriver {
   Future<LiteRtLmSpeechToTextSupport> probeSupport({
     String? libraryPath,
   }) async {
+    if (libraryPath == null || libraryPath.trim().isEmpty) {
+      final unsupported = liteRtLmUnsupportedAbiException(liteRtLmGateAbi());
+      if (unsupported != null) {
+        return LiteRtLmSpeechToTextSupport(
+          isSupported: false,
+          unsupportedReason: unsupported.message,
+        );
+      }
+    }
     LiteRtLmRuntimeClient? runtime;
     try {
       runtime = LiteRtLmRuntimeClient(libraryPath: libraryPath);
