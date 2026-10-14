@@ -767,10 +767,18 @@ a follow-up. Do not insert requested bundle metadata as observed runtime evidenc
 checks: `image-sdxs-cpu` (Android, CPU) and `image-sdxs-metal` (iOS, Metal).
 They run the chat-app test `integration_test/image_generation_e2e_test.dart`
 (SDXS download through the image screen, one seeded 512x512 image, and a
-verified receipt with both PNGs), not the shared text suite. They live outside
+verified receipt with both PNGs), not the shared text suite. The
+`image-settings-cpu` and `image-settings-metal` profiles (`suite`
+`settings-comparison`) run
+`integration_test/image_settings_comparison_e2e_test.dart` instead: the
+automatic attention and VAE settings against explicit overrides for SDXS and
+SD-Turbo with and without TAESD, with time per image and peak memory per arm
+([#805](https://github.com/leehack/llamadart/issues/805); see the chat app
+README). They live outside
 `assets/profiles/` because that directory is bundled into the QA app and every
 file in it must parse as a text profile; an ID names one file in either
-directory. Each profile locks exactly the chat app's SDXS model; the builder
+directory. Each profile locks exactly the chat app's SDXS model (a settings profile
+locks its SDXS, SD-Turbo and TAESD files, in that order); the builder
 and the upload check reject any other lock, an unknown backend, and a target
 the backend is not routed on (CPU is Android only, Metal iOS only; desktop,
 Web and `ios-inputs` are rejected).
@@ -792,10 +800,12 @@ step; `test.apk` only carries the Java instrumentation runner. It records
 The test reads the commit and clean flag from those defines, so only a clean
 committed build can produce evidence that verifies.
 
-Android pulls `files/image_generation_e2e` instead of `files/validation`.
+Android pulls `files/image_generation_e2e` (`files/image_settings` for a
+settings profile) instead of `files/validation`.
 iOS Test Lab does not collect the app cache directory the test writes to, so
-the XCTest runner attaches the latest `image_generation_e2e/run-*` receipt and
-PNGs (each at most 16 MiB) to the result; collection exports them on macOS.
+the XCTest runner attaches the latest `image_generation_e2e/run-*` and
+`image_settings/run-*` receipts, journals and PNGs (each at most 16 MiB) to
+the result; collection exports them on macOS.
 Collection then grades with the maintained image verifier
 (`verifyImageEvidence`) instead of the text report and writes
 `report/image-verdict.json`. It verifies only when exactly one run's evidence
@@ -803,6 +813,12 @@ was collected and the receipt matches the bundle: its exact clean source
 commit, the profile's backend device (`CPU` or `MTL0`), the bundle's
 `stable_diffusion_tag`, the profile's model lock, seed 42 and 512x512, with
 both PNGs structurally valid and matching the receipt's sizes and SHA256.
+A settings receipt is graded by `verifyImageSettingsEvidence` against the
+same identity and the profile's three model locks: its summary must be the one
+its per-load records give, every arm must have generated deterministically or
+been refused by the load-time memory check, and each generating arm's 512x512
+PNG must match the arm's image hash. `report/image-verdict.json` then carries
+the summary table (`kind` `image_settings_comparison`).
 As for text profiles, the run qualifies only if the provider outcome is also
 SUCCESS and cleanup is verified. PNG checks are structural; they do not judge
 image quality, and the backend is the device the runtime reported, not proof

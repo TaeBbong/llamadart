@@ -939,6 +939,49 @@ Each run directory holds the first image as `coexistence_image.png` and
 `coexistence.json` with the replies, hashes, timings and memory figures. Give
 the Test Lab timeout both downloads on top of the run.
 
+#### Automatic image attention and VAE settings
+
+`integration_test/image_settings_comparison_e2e_test.dart` compares the
+automatic `ImageModelParams.flashAttention` and `vaeDirectConvolution`
+settings with explicit overrides
+([#805](https://github.com/leehack/llamadart/issues/805)). In one process it
+loads SDXS-512, SD-Turbo with TAESD and SD-Turbo with its full VAE once per
+arm: `auto` (no overrides) and `both_off` (both `false`), plus `fa_off` and
+`vae_direct_off` for the full VAE, the only variant whose automatic settings
+turn both on. Each load generates the same 512x512 image with seed 42: one
+warm-up, then one timed image per load on Android and two elsewhere
+(`IMAGE_SETTINGS_MEASURED`). Two rounds (`IMAGE_SETTINGS_ROUNDS`) load every
+arm again in the reverse order. A load records wall time per image, split at
+the first decoding event into sampling and decode, the image hash, the
+backend and the peak memory from load to dispose: Android `VmHWM` reset
+through `/proc/self/clear_refs`, Apple `phys_footprint` peak reset through
+`proc_reset_footprint_interval` (it includes Metal buffers), each with a 20 ms
+sampled peak beside it. A model that the load-time memory check refuses is
+recorded as refused for all its arms.
+
+```text
+IMAGE_SETTINGS {"type":"config",...}
+IMAGE_SETTINGS {"type":"load","variant":"sdxs","arm":"auto","round":0,...}
+IMAGE_SETTINGS {"type":"summary","variant":"sdxs","arm":"both_off","ms_per_image_median":...,"vs_auto":{...}}
+```
+
+Each record is also appended to `image_settings/run-*/journal.jsonl` (app
+external files on Android, the temporary directory elsewhere); the end writes
+`image_settings.json` with the summary and one PNG per arm, and verifies them.
+The test fails when an arm fails, gives different images for the same seed,
+or does not start within `IMAGE_SETTINGS_BUDGET_MINUTES` (16).
+`IMAGE_SETTINGS_DEVICE=cpu` measures the CPU on a Mac, and
+`IMAGE_SETTINGS_VARIANTS` runs a comma-separated subset.
+
+```sh
+dart run tool/testing/run_local_e2e.dart \
+  --scenario chat-app-image-settings-comparison --device <device>
+```
+
+For Firebase Test Lab, build it with the `image-settings-cpu` (Android) or
+`image-settings-metal` (iOS) validation profile; collection grades the receipt
+([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
+
 #### Micro-batch sweep and the Android Vulkan prompt cap
 
 `integration_test/micro_batch_sweep_e2e_test.dart` loads the locked
