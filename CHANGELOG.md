@@ -18,6 +18,13 @@
 - The default llama.cpp runtime is now `leehack/llamadart-native@v0.6.0-3`,
   whose Apple frameworks declare their minimum OS version (iOS 16.4, macOS
   13.3) ([#1037](https://github.com/leehack/llamadart/issues/1037)).
+- `ImageModelParams.vaeDirectConvolution: true` now throws
+  `LlamaUnsupportedException` at load on iOS Metal instead of returning
+  corrupt images ([#1044](https://github.com/leehack/llamadart/issues/1044)).
+- After a failed Metal command buffer, image generation now says the model
+  must be reloaded, and later generations on that engine fail at once with
+  the same message, instead of claiming the next request can run
+  ([#1045](https://github.com/leehack/llamadart/issues/1045)).
 
 ## 0.12.1
 

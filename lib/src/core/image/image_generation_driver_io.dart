@@ -46,6 +46,9 @@ class _NativeImageGenerationDriver implements ImageGenerationDriver {
   final ImageGpuMemoryReader _readGpuMemory;
 
   @override
+  String get operatingSystem => stableDiffusionHostOperatingSystem();
+
+  @override
   StableDiffusionRuntimeStatus probe() =>
       _probe(logLevel: imageRuntimeLogLevel());
 
