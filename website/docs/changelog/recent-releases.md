@@ -7,6 +7,14 @@ For canonical full release notes, use:
 
 - [`CHANGELOG.md`](https://github.com/leehack/llamadart/blob/main/CHANGELOG.md)
 
+## Unreleased
+
+- Flutter macOS apps with `llamadart_litert_lm_flutter` now load LiteRT-LM on
+  CPU and GPU from their own bundle, so sandboxed, copied and distributed apps
+  work without a build phase; pair it with the companion release that embeds
+  the macOS runtime
+  ([#1029](https://github.com/leehack/llamadart/issues/1029)).
+
 ## 0.12.0
 
 - Pair this release with Apple companions `llamadart_llama_cpp_flutter`

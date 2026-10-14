@@ -229,10 +229,11 @@ ignore it. Adding it opts iOS and macOS builds into the image generation
 runtime (about 37 MB per Apple target), so leave it out unless the app uses
 `ImageGenerationEngine`.
 
-The LiteRT-LM companion manifest includes the complete iOS SwiftPM runtime
-targets. Llamadart uses that SwiftPM path for iOS; Flutter macOS LiteRT-LM
-builds keep the core package's native-assets fallback because the hook path is
-responsible for the complete runtime library set.
+The LiteRT-LM companion manifest links the complete iOS and macOS SwiftPM
+runtime, including the macOS WebGPU accelerator, so a sandboxed or distributed
+Flutter macOS app loads LiteRT-LM from its own bundle. A Flutter macOS app
+without the companion, or on companion `0.0.14` and earlier, needs the
+[LiteRT-LM build phase](https://llamadart.leehack.com/docs/getting-started/installation#flutter-macos-litert-lm-build-phase).
 
 The pinned LiteRT-LM runtime supports arm64 iOS devices and arm64 iOS
 Simulator builds. Intel/x86_64 iOS Simulator builds are not published.

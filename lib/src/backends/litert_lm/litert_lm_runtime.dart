@@ -392,13 +392,11 @@ List<String> liteRtLmMacOsRequiredNativeSpmFilesForAbi(Abi abi) {
     Abi.macosArm64 => const <String>[
       'LiteRtLm.framework/Versions/A/LiteRtLm',
       'libCLiteRTLM_mac.dylib',
-      'GemmaModelConstraintProvider.framework/Versions/A/GemmaModelConstraintProvider',
-      'LiteRt.framework/Versions/A/LiteRt',
-      'LiteRtMetalAccelerator.framework/Versions/A/LiteRtMetalAccelerator',
-      'LiteRtTopKMetalSampler.framework/Versions/A/LiteRtTopKMetalSampler',
-      'LiteRtTopKWebGpuSampler.framework/Versions/A/LiteRtTopKWebGpuSampler',
-      'LiteRtWebGpuAccelerator.framework/Versions/A/LiteRtWebGpuAccelerator',
-      'webgpu_dawn.framework/Versions/A/webgpu_dawn',
+      'LiteRtLm.framework/Versions/A/Dependencies/libGemmaModelConstraintProvider.dylib',
+      'libLiteRt.dylib',
+      'libLiteRtTopKWebGpuSampler.dylib',
+      'libLiteRtWebGpuAccelerator.dylib',
+      'libwebgpu_dawn.dylib',
     ],
     Abi.macosX64 => const <String>[
       'LiteRtLm.framework/Versions/A/LiteRtLm',

@@ -118,12 +118,13 @@ or shipping runtimes the app does not use.
     `ChatSession`).
 - Apple SwiftPM linking uses the companion packages:
   `llamadart_llama_cpp_flutter` (llama.cpp XCFrameworks),
-  `llamadart_litert_lm_flutter` (LiteRT-LM iOS XCFrameworks) and
+  `llamadart_litert_lm_flutter` (LiteRT-LM iOS and macOS XCFrameworks) and
   `llamadart_stable_diffusion_flutter` (image generation). Use the companion
   version the llamadart README pairs with your core version. The build
   verifies the companion's runtime pin and fails on a mismatch; fix the
-  version and rerun `flutter pub get`. Flutter macOS LiteRT-LM still uses the
-  core hook's native assets.
+  version and rerun `flutter pub get`. Flutter macOS LiteRT-LM needs the
+  LiteRT-LM companion to put the runtime in the app bundle; without it a
+  sandboxed or distributed macOS app cannot load LiteRT-LM.
 - LiteRT-LM on iOS: 16.4 is the declared deployment floor, not a tested one.
   On a device it has run only on an iPhone 16 Pro with iOS 18.3.2, so test
   older iOS versions before supporting them.

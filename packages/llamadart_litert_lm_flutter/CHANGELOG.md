@@ -1,3 +1,10 @@
+## Unreleased
+
+* Link and embed the complete macOS arm64 LiteRT-LM runtime from
+  `leehack/litert-lm-native@v0.18.0`, adding the `LiteRt`, WebGPU accelerator
+  and sampler, and Dawn XCFrameworks, so sandboxed and distributed Flutter
+  macOS apps load LiteRT-LM from their own bundle.
+
 ## 0.0.14
 
 * Updated Apple SwiftPM native pin to `leehack/litert-lm-native@v0.18.0`.

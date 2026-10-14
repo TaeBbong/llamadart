@@ -8,8 +8,14 @@ The `llamadart` build hook (`hook/build.dart`) downloads prebuilt llama.cpp and
 LiteRT-LM runtimes for the target platform, so apps never compile C++. The hook
 reports the downloaded `.so`, `.dylib` and `.dll` files as `package:code_assets`
 code assets, and the Flutter or Dart build bundles them into the APK, IPA or
-desktop app. On macOS, LiteRT-LM libraries stay in the hook cache and load from
-there.
+desktop app. On macOS, the hook does not report LiteRT-LM libraries: they stay
+in the hook cache inside the resolved `llamadart` package. `dart run` loads
+them from there and a `dart build cli` bundle needs
+`LLAMADART_LITERT_LM_LIB_DIR`. A Flutter macOS app gets them from the
+`llamadart_litert_lm_flutter` companion instead
+([Flutter Apple apps](#flutter-apple-apps)); without it, the app needs the
+[LiteRT-LM build phase](../getting-started/installation#flutter-macos-litert-lm-build-phase)
+to copy them into the app bundle.
 
 Configure the hook under `hooks.user_defines.llamadart` in the app's
 `pubspec.yaml`. Every key is optional:
@@ -359,7 +365,10 @@ Flutter iOS and macOS apps link runtimes through Swift Package Manager when a
 companion package is a dependency:
 
 - `llamadart_llama_cpp_flutter` links the llama.cpp XCFrameworks.
-- `llamadart_litert_lm_flutter` links the LiteRT-LM iOS XCFrameworks.
+- `llamadart_litert_lm_flutter` links the LiteRT-LM iOS and macOS
+  XCFrameworks, including the macOS WebGPU accelerator, sampler and Dawn. The
+  Metal accelerator and sampler stay iOS-only: their `v0.18.0` macOS slices
+  carry an invalid code signature, and the macOS GPU path uses WebGPU.
 - `llamadart_stable_diffusion_flutter` links the stable-diffusion.cpp
   XCFramework for [image generation](../guides/image-generation).
 
@@ -376,8 +385,13 @@ resolved llama.cpp and stable_diffusion companions' pins against the core
 package and rejects local `Artifacts` overrides. The tag,
 repository, path and backend keys do not change SwiftPM binaries; their pins
 live in each companion's `Package.swift`, so use a path or git override or a
-fork of the companion. Flutter macOS LiteRT-LM still uses the hook-managed
-runtime. Without a companion, and for non-Flutter or non-Apple builds, the hook
+fork of the companion. On macOS the hook hands LiteRT-LM to the companion
+only when the resolved companion's `Package.swift` is the maintained manifest
+pinning the core's LiteRT-LM release. Any other companion, including `0.0.14`
+and earlier, keeps macOS LiteRT-LM in the hook cache with a build warning; a
+sandboxed, copied or distributed app cannot read that cache and needs the
+[LiteRT-LM build phase](../getting-started/installation#flutter-macos-litert-lm-build-phase).
+Without a companion, and for non-Flutter or non-Apple builds, the hook
 path above applies.
 
 Standalone Dart on macOS keeps LiteRT-LM libraries in the hook cache. A custom
@@ -460,8 +474,10 @@ An app declares those three categories, with the same reasons, in its own
 built app has no `PrivacyInfo.xcprivacy` inside the embedded LiteRT-LM
 frameworks. On macOS, which Apple's requirement does not cover, the
 companion's `LiteRtLm.framework` carries a File Timestamp manifest, while its
-`libCLiteRTLM_mac.dylib` and the hook-managed runtime dylibs are bare
-libraries without one. The reasons come from the runtime owner's
+flat dylibs
+(`libCLiteRTLM_mac`, `libLiteRt`, the WebGPU accelerator and sampler, and
+`libwebgpu_dawn`) and the hook-managed runtime dylibs are bare libraries
+without one. The reasons come from the runtime owner's
 [audit of the binaries](https://github.com/leehack/litert-lm-native/blob/v0.17.0-8/docs/apple_privacy_manifest.md)
 ([litert-lm-native#65](https://github.com/leehack/litert-lm-native/issues/65));
 llamadart has not verified them, or an app-level declaration, with an App

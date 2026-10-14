@@ -8,8 +8,12 @@ The `llamadart` build hook (`hook/build.dart`) downloads prebuilt llama.cpp and
 LiteRT-LM runtimes for the target platform, so apps never compile C++. The hook
 reports the downloaded `.so`, `.dylib` and `.dll` files as `package:code_assets`
 code assets, and the Flutter or Dart build bundles them into the APK, IPA or
-desktop app. On macOS, LiteRT-LM libraries stay in the hook cache and load from
-there.
+desktop app. On macOS, the hook does not report LiteRT-LM libraries: they stay
+in the hook cache inside the resolved `llamadart` package. `dart run` loads
+them from there, a `dart build cli` bundle needs `LLAMADART_LITERT_LM_LIB_DIR`,
+and a Flutter macOS app needs the
+[LiteRT-LM build phase](../getting-started/installation#flutter-macos-litert-lm-build-phase)
+to copy them into the app bundle.
 
 Configure the hook under `hooks.user_defines.llamadart` in the app's
 `pubspec.yaml`. Every key is optional:
@@ -376,8 +380,10 @@ resolved llama.cpp and stable_diffusion companions' pins against the core
 package and rejects local `Artifacts` overrides. The tag,
 repository, path and backend keys do not change SwiftPM binaries; their pins
 live in each companion's `Package.swift`, so use a path or git override or a
-fork of the companion. Flutter macOS LiteRT-LM still uses the hook-managed
-runtime. Without a companion, and for non-Flutter or non-Apple builds, the hook
+fork of the companion. Flutter macOS LiteRT-LM still uses the hook cache, which
+a sandboxed, copied or distributed app cannot read; add the
+[LiteRT-LM build phase](../getting-started/installation#flutter-macos-litert-lm-build-phase).
+Without a companion, and for non-Flutter or non-Apple builds, the hook
 path above applies.
 
 Standalone Dart on macOS keeps LiteRT-LM libraries in the hook cache. A custom
