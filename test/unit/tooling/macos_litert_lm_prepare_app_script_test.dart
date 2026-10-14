@@ -1,6 +1,7 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
@@ -8,7 +9,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('macos_litert_lm_prepare_app.sh', () {
-    test('chat app embeds the macOS runtime after Flutter assembly', () {
+    test('chat app relies on the companion instead of a LiteRT-LM phase', () {
       final project = File(
         path.join(
           'example',
@@ -19,37 +20,79 @@ void main() {
         ),
       ).readAsStringSync();
 
-      final nativeTargetsStart = project.indexOf(
-        '/* Begin PBXNativeTarget section */',
-      );
-      expect(nativeTargetsStart, greaterThanOrEqualTo(0));
-      final runnerTargetStart = project.indexOf(
-        '/* Runner */ = {',
-        nativeTargetsStart,
-      );
-      final runnerBuildPhasesEnd = project.indexOf(
-        'buildRules = (',
-        runnerTargetStart,
-      );
-      expect(runnerTargetStart, greaterThanOrEqualTo(0));
-      expect(runnerBuildPhasesEnd, greaterThan(runnerTargetStart));
-
-      final runnerBuildPhases = project.substring(
-        runnerTargetStart,
-        runnerBuildPhasesEnd,
-      );
-      final flutterEmbed = runnerBuildPhases.indexOf('/* ShellScript */');
-      final prepareRuntime = runnerBuildPhases.indexOf(
-        '/* Prepare LiteRT-LM Runtime */',
-      );
-
-      expect(flutterEmbed, greaterThanOrEqualTo(0));
-      expect(prepareRuntime, greaterThan(flutterEmbed));
       expect(project, contains('macos_assemble.sh embed'));
-      expect(project, contains('tool/macos_litert_lm_prepare_app.sh'));
-      expect(project, contains(r'if [ -f \"$SCRIPT\" ]'));
-      expect(project, contains(r'bash \"$SCRIPT\"'));
+      expect(project, isNot(contains('LiteRT-LM')));
+      expect(project, isNot(contains('macos_litert_lm_prepare_app.sh')));
     });
+
+    for (final docs in _installationDocs) {
+      test('$docs build phase runs the resolved package script', () async {
+        final script = _documentedBuildPhase(docs);
+        final root = await Directory.systemTemp.createTemp(
+          'litert_prepare_docs_',
+        );
+        addTearDown(() => root.delete(recursive: true));
+
+        final workspace = Directory(path.join(root.path, 'my workspace'));
+        final package = Directory(
+          path.join(workspace.path, 'packages', 'llama dart'),
+        );
+        final prepare = File(
+          path.join(package.path, 'tool', 'macos_litert_lm_prepare_app.sh'),
+        );
+        await prepare.parent.create(recursive: true);
+        await prepare.writeAsString('echo "PREPARE \$1"\n');
+        final config = File(
+          path.join(workspace.path, '.dart_tool', 'package_config.json'),
+        );
+        await config.parent.create(recursive: true);
+        final project = Directory(
+          path.join(workspace.path, 'apps', 'my app', 'macos'),
+        );
+        await project.create(recursive: true);
+
+        Future<ProcessResult> run() => Process.run(
+          'bash',
+          ['-c', script],
+          environment: {
+            'PROJECT_DIR': project.path,
+            'TARGET_BUILD_DIR': path.join(root.path, 'Build'),
+            'WRAPPER_NAME': 'My App.app',
+          },
+        );
+        final appPath = path.join(root.path, 'Build', 'My App.app');
+
+        for (final rootUri in [
+          '../packages/llama%20dart/',
+          Uri.directory(package.path).toString(),
+        ]) {
+          await config.writeAsString(
+            jsonEncode({
+              'configVersion': 2,
+              'packages': [
+                {'name': 'meta', 'rootUri': 'file:///unused/'},
+                {'name': 'llamadart', 'rootUri': rootUri},
+              ],
+            }),
+          );
+          final result = await run();
+          expect(result.exitCode, 0, reason: '$rootUri: ${result.stderr}');
+          expect(result.stdout, contains('PREPARE $appPath'));
+        }
+
+        await config.writeAsString(
+          jsonEncode({'configVersion': 2, 'packages': <Object>[]}),
+        );
+        final unresolved = await run();
+        expect(unresolved.exitCode, 1);
+        expect(unresolved.stderr, contains('llamadart is not resolved'));
+
+        await config.delete();
+        final missing = await run();
+        expect(missing.exitCode, 1);
+        expect(missing.stderr, contains('run flutter pub get'));
+      }, skip: Platform.isMacOS ? false : 'requires macOS plutil');
+    }
 
     test('rejects incomplete explicit arm64 runtime directories', () async {
       final root = await Directory.systemTemp.createTemp(
@@ -219,6 +262,38 @@ void main() {
       skip: Platform.isWindows ? 'requires bash and POSIX symlinks' : false,
     );
 
+    test(
+      'skips the copy when the arm64 SwiftPM companion layout is embedded',
+      () async {
+        final root = await Directory.systemTemp.createTemp(
+          'litert_prepare_complete_spm_',
+        );
+        addTearDown(() => root.delete(recursive: true));
+
+        final appDir = Directory(path.join(root.path, 'Test.app'));
+        final frameworksDir = path.join(appDir.path, 'Contents', 'Frameworks');
+        for (final file in _arm64SwiftPmFiles) {
+          final embedded = File(path.join(frameworksDir, file));
+          await embedded.parent.create(recursive: true);
+          await embedded.create();
+        }
+
+        final result = await Process.run(
+          'bash',
+          ['tool/macos_litert_lm_prepare_app.sh', appDir.path],
+          environment: {'LLAMADART_LITERT_LM_ARCH': 'arm64'},
+        );
+
+        expect(result.exitCode, 0, reason: result.stderr.toString());
+        expect(result.stdout, contains('Complete LiteRT-LM runtime detected'));
+        expect(
+          Directory(path.join(frameworksDir, 'LiteRtLmRuntime')).existsSync(),
+          isFalse,
+        );
+      },
+      skip: Platform.isWindows ? 'requires bash and POSIX symlinks' : false,
+    );
+
     test('installs the x64 runtime library set', () async {
       final root = await Directory.systemTemp.createTemp('litert_prepare_x64_');
       addTearDown(() => root.delete(recursive: true));
@@ -262,6 +337,20 @@ void main() {
   });
 }
 
+const _installationDocs = [
+  'website/docs/getting-started/installation.md',
+  'website/versioned_docs/version-0.12.0/getting-started/installation.md',
+];
+
+/// The `bash` block of the Flutter macOS LiteRT-LM build phase section.
+String _documentedBuildPhase(String docsPath) {
+  final docs = File(docsPath).readAsStringSync();
+  final section = docs.indexOf('### Flutter macOS LiteRT-LM build phase');
+  expect(section, greaterThanOrEqualTo(0), reason: docsPath);
+  final start = docs.indexOf('```bash\n', section) + '```bash\n'.length;
+  return docs.substring(start, docs.indexOf('```', start));
+}
+
 Future<ProcessResult> _runPrepareApp(
   Directory appDir,
   Directory libDir, {
@@ -284,6 +373,17 @@ const List<String> _arm64Libraries = [
   'libLiteRtLm.dylib',
   'libLiteRtMetalAccelerator.dylib',
   'libLiteRtTopKMetalSampler.dylib',
+  'libLiteRtTopKWebGpuSampler.dylib',
+  'libLiteRtWebGpuAccelerator.dylib',
+  'libwebgpu_dawn.dylib',
+];
+
+/// What Xcode embeds from the companion's v0.18.0 xcframeworks.
+const List<String> _arm64SwiftPmFiles = [
+  'LiteRtLm.framework/Versions/A/LiteRtLm',
+  'libCLiteRTLM_mac.dylib',
+  'LiteRtLm.framework/Versions/A/Dependencies/libGemmaModelConstraintProvider.dylib',
+  'libLiteRt.dylib',
   'libLiteRtTopKWebGpuSampler.dylib',
   'libLiteRtWebGpuAccelerator.dylib',
   'libwebgpu_dawn.dylib',

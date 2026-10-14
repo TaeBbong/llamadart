@@ -40,23 +40,42 @@ void main() {
       manifest,
       contains('name: "CLiteRTLM", condition: .when(platforms: [.iOS])'),
     );
-    expect(
-      manifest,
-      contains(
-        'name: "LiteRtMetalAccelerator", condition: '
-        '.when(platforms: [.iOS])',
-      ),
-    );
-    expect(
-      manifest,
-      contains(
-        'name: "LiteRtTopKMetalSampler", condition: '
-        '.when(platforms: [.iOS])',
-      ),
-    );
+    // The v0.18.0 macOS slices of these two carry an invalid signature, and
+    // the macOS GPU path uses the WebGPU accelerator instead.
+    for (final target in ['LiteRtMetalAccelerator', 'LiteRtTopKMetalSampler']) {
+      expect(
+        manifest,
+        contains('name: "$target", condition: .when(platforms: [.iOS])'),
+      );
+    }
   });
 
-  test('keeps macOS on the hook-managed runtime fallback', () {
+  test('links the complete macOS arm64 runtime', () {
+    final manifest = File(
+      'darwin/llamadart_litert_lm_flutter/Package.swift',
+    ).readAsStringSync();
+
+    for (final target in [
+      'LiteRt',
+      'LiteRtTopKWebGpuSampler',
+      'LiteRtWebGpuAccelerator',
+      'WebgpuDawn',
+    ]) {
+      expect(
+        manifest,
+        contains(
+          'artifactName: "litert-lm-native-apple-$target-xcframework-'
+          r'\(liteRtLmTag).zip"',
+        ),
+      );
+      expect(
+        manifest,
+        contains('name: "$target", condition: .when(platforms: [.macOS])'),
+      );
+    }
+  });
+
+  test('macOS plugin source does not import the runtime modules', () {
     final pluginSource = File(
       'darwin/llamadart_litert_lm_flutter/Sources/'
       'llamadart_litert_lm_flutter/LlamadartLiteRtLmPlugin.swift',

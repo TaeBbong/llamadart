@@ -77,6 +77,34 @@ let package = Package(
             tag: liteRtLmTag,
             checksum: "ca9a079c3d91c41923e529c68aebfebb540cb65b2100787b035d433bcead7ce2"
         ),
+        nativeRepoBinaryTarget(
+            name: "LiteRt",
+            repository: "leehack/litert-lm-native",
+            artifactName: "litert-lm-native-apple-LiteRt-xcframework-\(liteRtLmTag).zip",
+            tag: liteRtLmTag,
+            checksum: "87d90748f50ae6048fc7fc5b0de6f14470baef036258180cf52d68f1e031dbaf"
+        ),
+        nativeRepoBinaryTarget(
+            name: "LiteRtTopKWebGpuSampler",
+            repository: "leehack/litert-lm-native",
+            artifactName: "litert-lm-native-apple-LiteRtTopKWebGpuSampler-xcframework-\(liteRtLmTag).zip",
+            tag: liteRtLmTag,
+            checksum: "4370a377fc5d5b5e7f5d8b106add4df876e99a6c5c052578e2e48c9bd69e1b52"
+        ),
+        nativeRepoBinaryTarget(
+            name: "LiteRtWebGpuAccelerator",
+            repository: "leehack/litert-lm-native",
+            artifactName: "litert-lm-native-apple-LiteRtWebGpuAccelerator-xcframework-\(liteRtLmTag).zip",
+            tag: liteRtLmTag,
+            checksum: "8c5fbd141736f9ab6f6937a4481ddca6cc1259dbd3441cc12e0cf4de91ccf2a8"
+        ),
+        nativeRepoBinaryTarget(
+            name: "WebgpuDawn",
+            repository: "leehack/litert-lm-native",
+            artifactName: "litert-lm-native-apple-WebgpuDawn-xcframework-\(liteRtLmTag).zip",
+            tag: liteRtLmTag,
+            checksum: "067cdfdcda01005ffff596f45f28c4093e59920a8f254219563f0462c18e2e3f"
+        ),
         .target(
             name: "llamadart_litert_lm_flutter",
             dependencies: [
@@ -84,7 +112,11 @@ let package = Package(
                 .target(name: "CLiteRTLM", condition: .when(platforms: [.iOS])),
                 .target(name: "CLiteRTLMMac", condition: .when(platforms: [.macOS])),
                 .target(name: "LiteRtMetalAccelerator", condition: .when(platforms: [.iOS])),
-                .target(name: "LiteRtTopKMetalSampler", condition: .when(platforms: [.iOS]))
+                .target(name: "LiteRtTopKMetalSampler", condition: .when(platforms: [.iOS])),
+                .target(name: "LiteRt", condition: .when(platforms: [.macOS])),
+                .target(name: "LiteRtTopKWebGpuSampler", condition: .when(platforms: [.macOS])),
+                .target(name: "LiteRtWebGpuAccelerator", condition: .when(platforms: [.macOS])),
+                .target(name: "WebgpuDawn", condition: .when(platforms: [.macOS]))
             ],
             linkerSettings: [
                 .unsafeFlags(["-Xlinker", "-reexport_framework", "-Xlinker", "LiteRtLm"], .when(platforms: [.iOS])),
