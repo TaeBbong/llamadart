@@ -7,7 +7,12 @@ For canonical full release notes, use:
 
 - [`CHANGELOG.md`](https://github.com/leehack/llamadart/blob/main/CHANGELOG.md)
 
-## Unreleased
+## 0.12.0
+
+- Pair this release with Apple companions `llamadart_llama_cpp_flutter`
+  `0.0.22`, `llamadart_litert_lm_flutter` `0.0.14` and
+  `llamadart_stable_diffusion_flutter` `0.0.3`, which link native runtimes
+  `v0.6.0-2`, `v0.18.0` and `v0.2.0-3`, respectively.
 
 - **Behavior change:** when the app, or any member of its pub workspace,
   depends on llamadart together with `flutter_edge_ai_llama` or
@@ -36,7 +41,10 @@ For canonical full release notes, use:
   `leehack/litert-lm-native@v0.18.0` (upstream LiteRT-LM `v0.18.0`). On the
   macOS GPU backend the program cache of Qwen3 0.6B and Gemma 4 E2B no longer
   grows on every engine create; Qwen3.5 0.8B's still does
-  ([#552](https://github.com/leehack/llamadart/issues/552)). The Windows
+  ([#552](https://github.com/leehack/llamadart/issues/552)), and on the GPU
+  backend that bundle can still return the prompt instead of an answer on
+  later requests to one engine, as in 0.11
+  ([#672](https://github.com/leehack/llamadart/issues/672)). The Windows
   bundle adds `webgpu_dawn.dll`, which the GPU accelerator now loads.
 - **Behavior change:** with LiteRT-LM `v0.18.0`, a `ModelParams.chatTemplate`
   on a Qwen 3 `.litertlm` text bundle receives each message's `content` as a
@@ -71,7 +79,7 @@ For canonical full release notes, use:
   `@litert-lm/core@0.18.0`. An app still chooses the module through
   `window.__llamadartLiteRtLmModuleUrl`; the chat app's `web/index.html` and
   the docs now name `0.18.0`.
-- Adopt `leehack/stable-diffusion-native@v0.2.0-2` for the opt-in
+- Adopt `leehack/stable-diffusion-native@v0.2.0-3` for the opt-in
   `stable_diffusion` image runtime.
 - Check the memory of Vulkan GPUs before loading an image model
   ([stable-diffusion-native#9](https://github.com/leehack/stable-diffusion-native/issues/9)).
@@ -89,7 +97,7 @@ For canonical full release notes, use:
   longer prints ggml's device messages to stderr: at the default level
   `none` it logs nothing.
 - Update the default llama.cpp runtime to
-  `leehack/llamadart-native@v0.6.0-1` (llama.cpp `v0.6.0`), and the
+  `leehack/llamadart-native@v0.6.0-2` (llama.cpp `v0.6.0`), and the
   `llamadart_llama_cpp_flutter` Apple SwiftPM pin with it.
 - **Behavior change:** a llama.cpp state file saved by llamadart 0.11.x or
   earlier no longer loads: llama.cpp `v0.6.0` changed the session format.

@@ -249,10 +249,14 @@ Use this checklist in native sync PRs:
 
 ## Companion package release handoff
 
-The repository LiteRT-LM pin is `v0.18.0`; it must ship in a new companion
-package release before the next core release. Published companion `0.0.13`
-retains `v0.17.0-8`. Do not present the repository manifest as an already
-published pub.dev package. The iOS artifacts
+Core `0.12.0` pairs with companions `llamadart_llama_cpp_flutter` `0.0.22`,
+`llamadart_litert_lm_flutter` `0.0.14` and
+`llamadart_stable_diffusion_flutter` `0.0.3`, whose SwiftPM pins are
+`v0.6.0-2`, `v0.18.0` and `v0.2.0-3`, respectively. The release-prep merge
+automation must publish any missing companion version before tagging core
+`0.12.0`; repository manifests alone do not prove pub.dev publication.
+Companion `llamadart_litert_lm_flutter` `0.0.13` retains `v0.17.0-8` for
+core `0.11.1` and `0.11.0`. The iOS artifacts
 meet the declared 16.4 deployment floor, but runtime execution at 16.4 remains
 unqualified; keep [#831](https://github.com/leehack/llamadart/issues/831) open.
 
