@@ -46,12 +46,27 @@ dependencies with `flutter pub get`.
   single-turn `is_appending_to_prefill` form. See
   [Chat templates](https://llamadart.leehack.com/docs/guides/chat-template-and-parsing#litert-lm-template-registry).
 - `llamadart_native_runtimes: all` includes the image runtime where it is
-  published. Use `[llama_cpp, litert_lm]` or leave the key unset to keep the
-  prior two-runtime selection on other platforms. On Flutter iOS/macOS,
+  published. Use `[llama_cpp, litert_lm]` or leave the key unset (without
+  Flutter Edge AI packages, see below) to keep the prior two-runtime selection
+  on other platforms. On Flutter iOS/macOS,
   adding `llamadart_stable_diffusion_flutter` selects the image runtime even
   with that explicit list or an unset key. To omit it on those Apple targets,
   also omit or remove the image companion dependency. Flutter iOS/macOS need
   that companion to include the image runtime through SwiftPM when using `all`.
+- Apps whose pubspec, or any member of the same pub workspace, also depends on
+  `flutter_edge_ai_llama` or `flutter_edge_ai_litertlm` no longer get the
+  LiteRT-LM runtime by default: with the key unset, `both` or `all`, the build
+  hook leaves `litert_lm` out and prints a `warning: llamadart:` line. To keep
+  loading `.litertlm` models through llamadart next to `flutter_edge_ai_llama`,
+  set `llamadart_native_runtimes: [llama_cpp, litert_lm]` in the app or
+  workspace-root `pubspec.yaml`. Next to `flutter_edge_ai_litertlm`, naming
+  `litert_lm` (or depending on `llamadart_litert_lm_flutter` on iOS/macOS)
+  fails the build; set `[llama_cpp]` and remove that companion. See
+  [Alongside Flutter Edge AI](https://llamadart.leehack.com/docs/platforms/native-build-hooks#alongside-flutter-edge-ai).
+- On an iOS simulator `GpuBackend.auto` now runs llama.cpp on the CPU
+  ([#950](https://github.com/leehack/llamadart/issues/950)), so simulator
+  timings are CPU timings. An explicit `GpuBackend.metal` still uses Metal
+  there and logs a warning; iOS devices and macOS are unchanged.
 
 LiteRT-LM automatic tool loops and strict structured output remain unsupported
 on the pinned runtime. The declared iOS 16.4 deployment floor still needs
