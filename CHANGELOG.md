@@ -7,6 +7,11 @@
   downloaded again, and a download that still does not match fails the build
   with `NativeArchiveDigestException`
   ([#1015](https://github.com/leehack/llamadart/issues/1015)).
+- Fix a LiteRT-LM bundle named `.litertlm` failing GPU engine creation on
+  iOS and Linux when the process cannot write the bundle's directory and
+  `liteRtLmCacheDir` is unset, as in an iOS app bundle: the GPU engine now
+  reuses caches already there or runs without them
+  ([#976](https://github.com/leehack/llamadart/issues/976)).
 
 ## 0.12.1
 
