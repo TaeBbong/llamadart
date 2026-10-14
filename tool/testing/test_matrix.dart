@@ -860,16 +860,18 @@ const List<TestMatrixRow> testMatrixRows = <TestMatrixRow>[
     mode: 'local-only; Firebase through the image-settings-* profiles',
     covers:
         'the automatic image attention and VAE settings against '
-        'flashAttention: false and vaeDirectConvolution: false (and each '
-        'alone for the full SD-Turbo VAE) for SDXS and SD-Turbo with and '
-        'without TAESD, in one process at seed 42 and 512x512: warm time '
+        'flashAttention: false and vaeDirectConvolution: false (and the '
+        'VAE setting alone for the full SD-Turbo VAE) for SDXS and SD-Turbo '
+        'with and without TAESD, in one process at seed 42 and 512x512: warm '
+        'time '
         'per image, sampling and decode split, per-load peak memory, '
         'backend and image hash per arm, with a verified receipt',
     command:
         'dart run tool/testing/run_local_e2e.dart --scenario '
         'chat-app-image-settings-comparison --device <macos|android|ios>; '
-        'on Firebase build --profile image-settings-cpu (android) or '
-        'image-settings-metal (ios), then plan, run and collect',
+        'on Firebase build --profile image-settings-cpu and '
+        'image-settings-cpu-vae (android) or image-settings-metal (ios), '
+        'then plan, run and collect',
     useWhen:
         'Changing the automatic flashAttention or vaeDirectConvolution '
         'defaults, the stable_diffusion runtime pin, or re-measuring them on '

@@ -102,7 +102,11 @@ void main() {
       );
 
       expect(row.command, contains('chat-app-image-settings-comparison'));
-      for (final id in ['image-settings-cpu', 'image-settings-metal']) {
+      for (final id in [
+        'image-settings-cpu',
+        'image-settings-cpu-vae',
+        'image-settings-metal',
+      ]) {
         expect(row.command, contains(id));
         expect(
           File(

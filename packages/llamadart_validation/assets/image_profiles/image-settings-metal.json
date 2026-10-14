@@ -4,6 +4,11 @@
   "runtime": "stable_diffusion",
   "backend": "metal",
   "suite": "settings-comparison",
+  "variants": [
+    "sdxs",
+    "sd_turbo_taesd",
+    "sd_turbo_vae"
+  ],
   "models": [
     {
       "filename": "sdxs-512-tinySDdistilled_Q8_0.gguf",

@@ -39,7 +39,7 @@ Map<String, dynamic> _load(
   if (status == 'ok') ...{
     'backend': backend,
     'load_ms': 10,
-    'warmup': {'wall_ms': 150, 'sha256': hash},
+    'warmup': {'wall_ms': 150},
     'generations': [
       for (final value in ms)
         {
@@ -76,7 +76,7 @@ void main() {
         _load('sdxs', 'both_off', ms: [200], hash: b, peak: 1200),
         _load('sdxs', 'both_off', round: 1, ms: [300], hash: b, peak: 1100),
         _load('sdxs', 'auto', round: 1, ms: [120], hash: a, peak: 950),
-      ]);
+      ], imageSettingsVariants.keys.toList());
       final auto = rows.firstWhere((row) => row['arm'] == 'auto');
       final off = rows.firstWhere((row) => row['arm'] == 'both_off');
       expect(auto['ms_per_image_median'], 110);
@@ -92,7 +92,7 @@ void main() {
       });
       expect(
         rows.where((row) => row['variant'] == 'sd_turbo_vae'),
-        hasLength(4),
+        hasLength(3),
       );
       expect(
         rows.where((row) => row['variant'] != 'sdxs').map((r) => r['status']),
@@ -101,12 +101,25 @@ void main() {
     });
 
     test('marks a changing hash as not deterministic', () {
-      final rows = summarizeImageSettingsLoads([
-        _load('sdxs', 'auto', hash: _hash(_png(1))),
-        _load('sdxs', 'auto', round: 1, hash: _hash(_png(2))),
-      ]);
+      final rows = summarizeImageSettingsLoads(
+        [
+          _load('sdxs', 'auto', hash: _hash(_png(1))),
+          _load('sdxs', 'auto', round: 1, hash: _hash(_png(2))),
+        ],
+        ['sdxs'],
+      );
       expect(rows.first['deterministic'], isFalse);
       expect(rows.first['sha256'], isNull);
+    });
+
+    test('summarizes only the variants a run compares', () {
+      final rows = summarizeImageSettingsLoads([], ['sd_turbo_vae']);
+      expect(rows.map((row) => row['arm']), [
+        'auto',
+        'both_off',
+        'vae_direct_off',
+      ]);
+      expect(rows.map((row) => row['status']), everyElement('not_run'));
     });
   });
 
@@ -133,6 +146,7 @@ void main() {
             {'filename': 'a.gguf'},
           ],
           'request': {'seed': 42, 'width': 512, 'height': 512},
+          'variants': imageSettingsVariants.keys.toList(),
           'loads':
               loads ??
               [
@@ -199,7 +213,7 @@ void main() {
       await expectLater(
         write(
           pngs: {
-            for (final arm in ['auto', 'both_off', 'fa_off'])
+            for (final arm in ['auto', 'both_off', 'vae_direct_off'])
               imageSettingsArtifactName('sdxs', arm): _png(7),
           },
         ),
@@ -243,6 +257,13 @@ void main() {
             expectedModelLocks: [
               {'filename': 'b.gguf'},
             ],
+          ),
+        ),
+        (
+          'variants mismatch',
+          () => verifyImageSettingsEvidence(
+            directory,
+            expectedVariants: ['sd_turbo_vae'],
           ),
         ),
       ]) {

@@ -234,6 +234,7 @@ void main() {
         'image-sdxs-cpu.json',
         'image-sdxs-metal.json',
         'image-settings-cpu.json',
+        'image-settings-cpu-vae.json',
         'image-settings-metal.json',
       });
       expect(text.intersection(image), isEmpty);
@@ -284,6 +285,7 @@ void main() {
         '$_package/assets/image_profiles/image-sdxs-cpu.json',
         '$_package/assets/image_profiles/image-sdxs-metal.json',
         '$_package/assets/image_profiles/image-settings-cpu.json',
+        '$_package/assets/image_profiles/image-settings-cpu-vae.json',
         'example/chat_app/pubspec.lock',
         'example/chat_app/ios/Runner.xcodeproj/project.pbxproj',
       ]) {
@@ -423,6 +425,10 @@ void main() {
           )
           .$2;
       expect(apk[apk.indexOf('--target') + 1], imageSettingsTestTarget);
+      expect(
+        defines(apk),
+        contains('IMAGE_SETTINGS_VARIANTS=sdxs,sd_turbo_taesd'),
+      );
       expect(
         commands.singleWhere((command) => command.$1.contains('gradlew')).$2,
         contains('-Ptarget=$imageSettingsTestTarget'),
@@ -932,6 +938,7 @@ void main() {
     test('lock every chat app comparison file for one mobile target', () {
       for (final (id, target) in [
         ('image-settings-cpu', 'android'),
+        ('image-settings-cpu-vae', 'android'),
         ('image-settings-metal', 'ios'),
       ]) {
         final profile = _profile(id);
@@ -959,6 +966,22 @@ void main() {
           'taesd.safetensors',
         ],
       );
+      expect(
+        [
+          for (final id in [
+            'image-settings-cpu',
+            'image-settings-cpu-vae',
+            'image-settings-metal',
+          ])
+            imageProfileDefines(_profile(id)),
+        ],
+        [
+          ['IMAGE_SETTINGS_VARIANTS=sdxs,sd_turbo_taesd'],
+          ['IMAGE_SETTINGS_VARIANTS=sd_turbo_vae'],
+          ['IMAGE_SETTINGS_VARIANTS=sdxs,sd_turbo_taesd,sd_turbo_vae'],
+        ],
+      );
+      expect(imageProfileDefines(_profile('image-sdxs-cpu')), isEmpty);
       expect(isImageSettingsProfile(_profile('image-sdxs-cpu')), isFalse);
       expect(
         imageProfileTestTarget(_profile('image-sdxs-cpu')),
@@ -977,6 +1000,10 @@ void main() {
         'single model': (v) => v['model'] = (v['models'] as List).first,
         'unknown suite': (v) => v['suite'] = 'settings',
         'no suite': (v) => v.remove('suite'),
+        'no variants': (v) => v.remove('variants'),
+        'empty variants': (v) => v['variants'] = <String>[],
+        'unknown variant': (v) => v['variants'] = ['sdxl'],
+        'repeated variant': (v) => v['variants'] = ['sdxs', 'sdxs'],
         'native path': (v) => v['execution_path'] = 'native_c_api',
       };
       for (final entry in mutations.entries) {
@@ -1049,14 +1076,14 @@ void main() {
         Directory directory, {
         String backend = 'CPU',
         String commit = _commit,
+        List<String> variants = const ['sdxs', 'sd_turbo_taesd'],
       }) async {
         final hash = sha256.convert(png).toString();
         await writeImageSettingsEvidence(
           directory: directory,
           pngs: {
-            for (final MapEntry(key: variant, value: arms)
-                in imageSettingsVariants.entries)
-              for (final arm in arms)
+            for (final variant in variants)
+              for (final arm in imageSettingsVariants[variant]!)
                 imageSettingsArtifactName(variant, arm): png,
           },
           receipt: {
@@ -1071,22 +1098,24 @@ void main() {
                 },
             ],
             'request': {'seed': 42, 'width': 512, 'height': 512},
+            'variants': variants,
             'loads': [
               for (final MapEntry(key: variant, value: arms)
                   in imageSettingsVariants.entries)
-                for (final arm in arms)
-                  {
-                    'variant': variant,
-                    'arm': arm,
-                    'status': 'ok',
-                    'backend': backend,
-                    'load_ms': 1,
-                    'warmup': {'wall_ms': 2, 'sha256': hash},
-                    'generations': [
-                      {'wall_ms': 3, 'sha256': hash},
-                    ],
-                    'memory': {'peak_bytes': 4},
-                  },
+                if (variants.contains(variant))
+                  for (final arm in arms)
+                    {
+                      'variant': variant,
+                      'arm': arm,
+                      'status': 'ok',
+                      'backend': backend,
+                      'load_ms': 1,
+                      'warmup': {'wall_ms': 2},
+                      'generations': [
+                        {'wall_ms': 3, 'sha256': hash},
+                      ],
+                      'memory': {'peak_bytes': 4},
+                    },
             ],
           },
         );
@@ -1125,7 +1154,8 @@ void main() {
         await write(pulledRun('run-1'));
         expect(await assess(plan('image-settings-cpu')), isTrue);
         expect(verdict()['kind'], 'image_settings_comparison');
-        expect(verdict()['evidence']['summary'], hasLength(8));
+        expect(verdict()['evidence']['summary'], hasLength(4));
+        expect(verdict()['expected']['variants'], ['sdxs', 'sd_turbo_taesd']);
         expect(verdict()['expected']['model_locks'], hasLength(3));
       });
 
@@ -1136,6 +1166,10 @@ void main() {
             (
               'backend mismatch',
               () => write(pulledRun('run-1'), backend: 'MTL0'),
+            ),
+            (
+              'variants mismatch',
+              () => write(pulledRun('run-1'), variants: ['sd_turbo_vae']),
             ),
             (
               'source does not match',
@@ -1182,7 +1216,11 @@ void main() {
 
       test('verifies exported iOS attachments named by the receipt', () async {
         final source = Directory(p.join(scratch.path, 'device-cache'));
-        await write(source, backend: 'MTL0');
+        await write(
+          source,
+          backend: 'MTL0',
+          variants: imageSettingsVariants.keys.toList(),
+        );
         File(
           p.join(source.path, imageSettingsJournalName),
         ).writeAsStringSync('{}\n');

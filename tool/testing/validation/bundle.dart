@@ -169,6 +169,7 @@ Future<Directory> buildValidationBundle(
     'VALIDATION_LITERT_TAG=${provenance['litert_tag']}',
     'VALIDATION_BRIDGE_TAG=${provenance['bridge_tag']}',
     'VALIDATION_HOOK_SHA256=${provenance['hook_sha256']}',
+    if (image) ...imageProfileDefines(selectedProfile),
   ];
   if (internalDiagnosticRunId != null) {
     final contract = await deriveInternalDiagnosticContract(

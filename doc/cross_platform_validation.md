@@ -768,13 +768,15 @@ checks: `image-sdxs-cpu` (Android, CPU) and `image-sdxs-metal` (iOS, Metal).
 They run the chat-app test `integration_test/image_generation_e2e_test.dart`
 (SDXS download through the image screen, one seeded 512x512 image, and a
 verified receipt with both PNGs), not the shared text suite. The
-`image-settings-cpu` and `image-settings-metal` profiles (`suite`
-`settings-comparison`) run
+`image-settings-cpu`, `image-settings-cpu-vae` (Android) and
+`image-settings-metal` (iOS) profiles (`suite` `settings-comparison`) run
 `integration_test/image_settings_comparison_e2e_test.dart` instead: the
 automatic attention and VAE settings against explicit overrides for SDXS and
 SD-Turbo with and without TAESD, with time per image and peak memory per arm
 ([#805](https://github.com/leehack/llamadart/issues/805); see the chat app
-README). They live outside
+README). Their `variants` list is compiled in as `IMAGE_SETTINGS_VARIANTS`
+and must match the receipt; Android splits the variants over two runs to stay
+inside 20 minutes. They live outside
 `assets/profiles/` because that directory is bundled into the QA app and every
 file in it must parse as a text profile; an ID names one file in either
 directory. Each profile locks exactly the chat app's SDXS model (a settings profile

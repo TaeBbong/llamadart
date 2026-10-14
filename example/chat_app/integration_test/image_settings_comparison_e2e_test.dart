@@ -6,11 +6,12 @@
 ///
 /// In one process, through the public API, it loads SDXS-512, SD-Turbo with
 /// TAESD and SD-Turbo with its full VAE once per arm of
-/// `imageSettingsVariants` and generates the same seeded 512x512 image: one
-/// warm-up, then `IMAGE_SETTINGS_MEASURED` timed images per load. Arms are
-/// `auto` (no overrides), `both_off` (`flashAttention: false,
+/// `imageSettingsVariants` and generates the same seeded 512x512 image:
+/// `ImageGenerationEngine.warmUp` (a one-step generation on a GPU, nothing
+/// on the CPU), then `IMAGE_SETTINGS_MEASURED` timed images per load. Arms
+/// are `auto` (no overrides), `both_off` (`flashAttention: false,
 /// vaeDirectConvolution: false`) and, for the full VAE, which is the only
-/// variant whose automatic settings turn both on, each setting off alone.
+/// variant whose automatic settings turn both on, `vae_direct_off`.
 /// `IMAGE_SETTINGS_ROUNDS` rounds load every arm again, alternating the arm
 /// order so that warming or throttling does not favour one arm.
 ///
@@ -76,7 +77,7 @@ const _deviceDefine = String.fromEnvironment(
 );
 const _variantsDefine = String.fromEnvironment('IMAGE_SETTINGS_VARIANTS');
 
-/// Phone CPUs take 5 to 30 s per image, so they time one image per load to
+/// Phone CPUs take 5 to 50 s per image, so they time one image per load to
 /// stay inside a 20-minute Test Lab run; elsewhere two.
 int get _measured =>
     _measuredDefine > 0 ? _measuredDefine : (Platform.isAndroid ? 1 : 2);
@@ -247,16 +248,22 @@ void main() {
             final capabilities = await engine.capabilities;
             load['backend'] = capabilities.backendName;
             load['model_version'] = capabilities.modelVersion;
-            final warmup = await _generate(engine, request);
-            load['warmup'] = warmup.timing;
-            load['generations'] = [
+            final warmupWatch = Stopwatch()..start();
+            await engine.warmUp(
+              width: _size,
+              height: _size,
+              guidanceScale: profile.guidanceScale,
+            );
+            load['warmup'] = {'wall_ms': warmupWatch.elapsedMilliseconds};
+            final images = [
               for (var i = 0; i < _measured; i++)
-                (await _generate(engine, request)).timing,
+                await _generate(engine, request),
             ];
+            load['generations'] = [for (final image in images) image.timing];
             load['status'] = 'ok';
             final key = imageSettingsArtifactName(variant, arm);
-            pngs.putIfAbsent(key, () => warmup.png);
-            pixels.putIfAbsent('${variant}__$arm', () => warmup.pixels);
+            pngs.putIfAbsent(key, () => images.first.png);
+            pixels.putIfAbsent('${variant}__$arm', () => images.first.pixels);
           } on LlamaModelException catch (error) {
             final memoryRefusal = error.message.contains('checkMemory');
             load['status'] = memoryRefusal ? 'refused' : 'failed';

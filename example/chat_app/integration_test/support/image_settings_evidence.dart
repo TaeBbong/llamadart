@@ -24,17 +24,18 @@ typedef ImageSettingsArm = ({bool? flashAttention, bool? vaeDirectConvolution});
 const Map<String, ImageSettingsArm> imageSettingsArms = {
   'auto': (flashAttention: null, vaeDirectConvolution: null),
   'both_off': (flashAttention: false, vaeDirectConvolution: false),
-  'fa_off': (flashAttention: false, vaeDirectConvolution: null),
   'vae_direct_off': (flashAttention: null, vaeDirectConvolution: false),
 };
 
 /// Model variants and the arms each runs. A tiny autoencoder (SDXS's
 /// embedded one, TAESD) keeps direct convolutions off automatically, so only
-/// the full SD-Turbo VAE separates the two defaults with single-setting arms.
+/// the full SD-Turbo VAE needs `vae_direct_off` to separate the two
+/// defaults: it differs from `auto` in the VAE alone and from `both_off` in
+/// flash attention alone.
 const Map<String, List<String>> imageSettingsVariants = {
   'sdxs': ['auto', 'both_off'],
   'sd_turbo_taesd': ['auto', 'both_off'],
-  'sd_turbo_vae': ['auto', 'both_off', 'fa_off', 'vae_direct_off'],
+  'sd_turbo_vae': ['auto', 'both_off', 'vae_direct_off'],
 };
 
 /// The evidence PNG of one arm: its first image.
@@ -53,17 +54,19 @@ num? _median(List<num> values) {
 num? _round(num? value) =>
     value == null ? null : (value * 10).roundToDouble() / 10;
 
-/// One row per variant and arm, in [imageSettingsVariants] order, from the
-/// per-load records [loads]. Time is the median of every measured image of
+/// One row per arm of each of [variants], in [imageSettingsVariants] order,
+/// from the per-load records [loads]. Time is the median of every measured image of
 /// the arm; peak memory is the smallest and largest per-load peak, so memory
 /// an earlier load left with the allocator shows as a spread. `vs_auto`
 /// compares a row with its variant's `auto` row.
 List<Map<String, Object?>> summarizeImageSettingsLoads(
   List<Map<String, dynamic>> loads,
+  List<String> variants,
 ) {
   final rows = <Map<String, Object?>>[];
   for (final MapEntry(key: variant, value: arms)
       in imageSettingsVariants.entries) {
+    if (!variants.contains(variant)) continue;
     Map<String, Object?>? auto;
     // The load-time memory check estimates from file sizes alone, so one
     // refused arm stands for every arm of its variant.
@@ -83,13 +86,7 @@ List<Map<String, Object?>> summarizeImageSettingsLoads(
           for (final generation in load['generations'] as List)
             generation as Map,
       ];
-      final hashes = {
-        for (final load in ok) ...[
-          (load['warmup'] as Map)['sha256'],
-          for (final generation in load['generations'] as List)
-            (generation as Map)['sha256'],
-        ],
-      };
+      final hashes = {for (final image in images) image['sha256']};
       final peaks = [
         for (final load in ok)
           if ((load['memory'] as Map?)?['peak_bytes'] case final int peak) peak,
@@ -201,9 +198,10 @@ Future<Map<String, dynamic>> writeImageSettingsEvidence({
       ...dimensions,
     };
   }
-  final summary = summarizeImageSettingsLoads([
-    for (final load in receipt['loads'] as List) load as Map<String, dynamic>,
-  ]);
+  final summary = summarizeImageSettingsLoads(
+    [for (final load in receipt['loads'] as List) load as Map<String, dynamic>],
+    [for (final variant in receipt['variants'] as List) variant as String],
+  );
   final manifest = {
     ...receipt,
     'schema_version': 1,
@@ -228,14 +226,16 @@ Future<Map<String, dynamic>> writeImageSettingsEvidence({
 /// memory check), and every generating arm's PNG must be present with the
 /// recorded bytes, the arm's image hash, and the requested size. The
 /// optional expectations qualify it against a build: clean source
-/// [expectedCommit], the backend every load reported, the runtime pin and
-/// the model locks. PNG checks are structural; they do not judge quality.
+/// [expectedCommit], the backend every load reported, the runtime pin, the
+/// model locks and the variants the build runs. PNG checks are structural;
+/// they do not judge quality.
 Map<String, dynamic> verifyImageSettingsEvidence(
   Directory directory, {
   String? expectedCommit,
   String? expectedBackend,
   String? expectedRuntimeTag,
   List<Map<String, dynamic>>? expectedModelLocks,
+  List<String>? expectedVariants,
 }) {
   final manifest =
       jsonDecode(
@@ -280,7 +280,18 @@ Map<String, dynamic> verifyImageSettingsEvidence(
       )) {
     throw const FormatException('Image settings backend mismatch');
   }
-  final summary = summarizeImageSettingsLoads(loads);
+  final variants = manifest['variants'];
+  if (variants is! List ||
+      variants.isEmpty ||
+      variants.toSet().length != variants.length ||
+      !variants.every(imageSettingsVariants.containsKey) ||
+      (expectedVariants != null &&
+          jsonEncode(variants) != jsonEncode(expectedVariants))) {
+    throw const FormatException('Image settings variants mismatch');
+  }
+  final summary = summarizeImageSettingsLoads(loads, [
+    for (final variant in variants) variant as String,
+  ]);
   final recorded = [
     for (final row in manifest['summary'] as List)
       {...row as Map<String, dynamic>}..remove('pixel_diff_vs_auto'),

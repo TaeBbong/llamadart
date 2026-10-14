@@ -946,17 +946,20 @@ automatic `ImageModelParams.flashAttention` and `vaeDirectConvolution`
 settings with explicit overrides
 ([#805](https://github.com/leehack/llamadart/issues/805)). In one process it
 loads SDXS-512, SD-Turbo with TAESD and SD-Turbo with its full VAE once per
-arm: `auto` (no overrides) and `both_off` (both `false`), plus `fa_off` and
+arm: `auto` (no overrides) and `both_off` (both `false`), plus
 `vae_direct_off` for the full VAE, the only variant whose automatic settings
-turn both on. Each load generates the same 512x512 image with seed 42: one
-warm-up, then one timed image per load on Android and two elsewhere
-(`IMAGE_SETTINGS_MEASURED`). Two rounds (`IMAGE_SETTINGS_ROUNDS`) load every
+turn both on; it differs from `auto` in the VAE setting alone and from
+`both_off` in flash attention alone. Each load runs
+`ImageGenerationEngine.warmUp` (a one-step generation on a GPU, nothing on
+the CPU) and then generates the same 512x512 image with seed 42: one timed
+image per load on Android and two elsewhere (`IMAGE_SETTINGS_MEASURED`). Two rounds (`IMAGE_SETTINGS_ROUNDS`) load every
 arm again in the reverse order. A load records wall time per image, split at
 the first decoding event into sampling and decode, the image hash, the
-backend and the peak memory from load to dispose: Android `VmHWM` reset
-through `/proc/self/clear_refs`, Apple `phys_footprint` peak reset through
-`proc_reset_footprint_interval` (it includes Metal buffers), each with a 20 ms
-sampled peak beside it. A model that the load-time memory check refuses is
+backend and the peak memory from load to dispose: Apple `phys_footprint` peak reset through
+`proc_reset_footprint_interval` (it includes Metal buffers), Android `VmHWM`
+reset through `/proc/self/clear_refs` where the app may write it, each with a
+20 ms sampled peak of the current figure beside it, which is the peak used
+when the reset is refused (as on a Galaxy S24 with Android 16). A model that the load-time memory check refuses is
 recorded as refused for all its arms.
 
 ```text
@@ -978,8 +981,13 @@ dart run tool/testing/run_local_e2e.dart \
   --scenario chat-app-image-settings-comparison --device <device>
 ```
 
-For Firebase Test Lab, build it with the `image-settings-cpu` (Android) or
-`image-settings-metal` (iOS) validation profile; collection grades the receipt
+For Firebase Test Lab, build it with a validation profile; collection grades
+the receipt. Test Lab devices download from Hugging Face at about 3 to 4 MB/s
+(SD-Turbo took 10 minutes on a Galaxy S24) and a phone CPU decodes the full
+SD-Turbo VAE in about 40 s, so Android splits the variants over two 20-minute
+runs: `image-settings-cpu` (SDXS and SD-Turbo with TAESD) and
+`image-settings-cpu-vae` (SD-Turbo with its full VAE). `image-settings-metal`
+runs all three on iOS
 ([image-generation profiles](../../doc/cross_platform_validation.md#image-generation-profiles)).
 
 #### Micro-batch sweep and the Android Vulkan prompt cap
