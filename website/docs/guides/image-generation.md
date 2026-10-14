@@ -541,8 +541,8 @@ on:
 
 | Setting | Automatic choice | Measured |
 | --- | --- | --- |
-| `flashAttention` (diffusion model) | On for the CPU and Metal, off on Vulkan | M4 Max Metal: SD 3.5 Medium sampling 1.6 times as fast, compute buffer 1.8 GiB to 0.3 GiB; SDXL-Lightning about 10% and FLUX about 5% faster; SD 1.x/2.x sampling time unchanged. M4 Max CPU: SD-Turbo sampling about a fifth faster. Pixels change slightly |
-| `vaeDirectConvolution` (VAE decode) | On, except on Metal and when a tiny autoencoder decodes: a `taesd` file, or a checkpoint whose header shows an embedded one, as SDXS's does | NVIDIA L4 Vulkan, 1024x1024, stable-diffusion.cpp's native CLI: decode 23 to 56 s to about 1 s, 4 to 5 GiB less device memory. M4 Max CPU, SD-Turbo 512x512: about 5% slower end to end, peak 3.6 GiB to 2.7 GiB. Metal: about 7 times slower. Identical output |
+| `flashAttention` (diffusion model) | On for the CPU and Metal, off on Vulkan | M4 Max Metal: SD 3.5 Medium sampling 1.6 times as fast, compute buffer 1.8 GiB to 0.3 GiB; SDXL-Lightning about 10% and FLUX about 5% faster; SD 1.x/2.x sampling time unchanged. M4 Max CPU: SD-Turbo sampling about a fifth faster. 512x512 on phones: SD-Turbo with TAESD 4 to 12% faster on a Galaxy S24 and a Pixel 9 Pro (CPU) and 11% on an iPhone 16 Pro (Metal), same peak memory; SDXS unchanged on those and a Galaxy A53. Pixels change slightly |
+| `vaeDirectConvolution` (VAE decode) | On, except on Metal and when a tiny autoencoder decodes: a `taesd` file, or a checkpoint whose header shows an embedded one, as SDXS's does | NVIDIA L4 Vulkan, 1024x1024, stable-diffusion.cpp's native CLI: decode 23 to 56 s to about 1 s, 4 to 5 GiB less device memory. M4 Max CPU, SD-Turbo 512x512: about 5% slower end to end, peak 3.6 GiB to 2.7 GiB. Galaxy S24 and Pixel 9 Pro CPU, SD-Turbo 512x512: peak 3.7 to 4.0 GiB to 2.8 to 3.1 GiB, time unchanged within thermal noise (about 56 s per image on the S24). Metal: about 7 times slower. Identical output |
 
 With a tiny autoencoder, direct convolutions cost time for little memory:
 on an M4 Max CPU they took 1.4 to 1.7 s per 512x512 SDXS image against 1.2
