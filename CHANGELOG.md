@@ -32,7 +32,10 @@
   `leehack/litert-lm-native@v0.18.0` (upstream LiteRT-LM `v0.18.0`). On the
   macOS GPU backend the program cache of Qwen3 0.6B and Gemma 4 E2B no longer
   grows on every engine create; Qwen3.5 0.8B's still does
-  ([#552](https://github.com/leehack/llamadart/issues/552)). The Windows
+  ([#552](https://github.com/leehack/llamadart/issues/552)), and on the GPU
+  backend that bundle can still return the prompt instead of an answer on
+  later requests to one engine, as in 0.11
+  ([#672](https://github.com/leehack/llamadart/issues/672)). The Windows
   bundle adds `webgpu_dawn.dll`, which the GPU accelerator now loads.
 - **Behavior change:** with LiteRT-LM `v0.18.0`, a `ModelParams.chatTemplate`
   on a Qwen 3 `.litertlm` text bundle receives each message's `content` as a
