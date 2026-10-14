@@ -76,6 +76,7 @@ const _deviceDefine = String.fromEnvironment(
   defaultValue: 'auto',
 );
 const _variantsDefine = String.fromEnvironment('IMAGE_SETTINGS_VARIANTS');
+const _downloadAttempts = 3;
 
 /// Phone CPUs take 5 to 50 s per image, so they time one image per load to
 /// stay inside a 20-minute Test Lab run; elsewhere two.
@@ -173,14 +174,29 @@ void main() {
       if (files == null) {
         final watch = Stopwatch()..start();
         final cached = await service.resolve(profile);
-        files =
-            cached ??
-            await service.install(
+        files = cached;
+        // Test Lab devices fetch about 2 GB from Hugging Face at a few MB/s,
+        // and the CDN can drop the connection for longer than the service's
+        // own retries (0.5 to 2 s); install resumes the partial file.
+        for (var attempt = 1; files == null; attempt++) {
+          try {
+            files = await service.install(
               profile,
               cancelToken: CancelToken(),
               onProgress: (_) {},
               onVerifying: () {},
             );
+          } on IOException catch (error) {
+            if (attempt == _downloadAttempts) rethrow;
+            record({
+              'type': 'download_retry',
+              'profile': profile.id,
+              'attempt': attempt,
+              'error_type': '${error.runtimeType}',
+            });
+            await Future<void>.delayed(const Duration(seconds: 15));
+          }
+        }
         installed[profile.id] = files;
         record({
           'type': 'model',
