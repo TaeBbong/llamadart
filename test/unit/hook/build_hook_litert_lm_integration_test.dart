@@ -626,21 +626,81 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
     },
   );
 
-  test(
-    'build hook keeps Flutter macOS LiteRT-LM on hook-managed assets',
-    () async {
+  for (final architecture in [Architecture.arm64, Architecture.x64]) {
+    test(
+      'build hook hands Flutter macOS $architecture LiteRT-LM to the SwiftPM '
+      'companion',
+      () async {
+        await testCodeBuildHook(
+          mainMethod: build_hook.main,
+          targetOS: OS.macOS,
+          targetArchitecture: architecture,
+          userDefines: await _flutterLiteRtLmOnlyUserDefines(),
+          check: (input, output) {
+            expect(output.assets.encodedAssets, isEmpty);
+            final outputDir = input.outputDirectory.toFilePath();
+            expect(
+              Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+              isFalse,
+            );
+            expect(
+              output.dependencies.map((uri) => uri.toFilePath()),
+              contains(
+                endsWith(
+                  path.join(
+                    'resolved litert companion',
+                    'darwin',
+                    'llamadart_litert_lm_flutter',
+                    'Package.swift',
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  for (final (scenario, defines) in [
+    (
+      'the published 0.0.14 manifest',
+      () => _flutterLiteRtLmOnlyUserDefines(
+        liteRtLmManifest: _publishedLiteRtLmCompanion0014Manifest(),
+      ),
+    ),
+    (
+      'a manifest pinning another LiteRT-LM tag',
+      () => _flutterLiteRtLmOnlyUserDefines(
+        liteRtLmManifest: _liteRtLmCompanionManifest().replaceFirst(
+          'let liteRtLmTag = "${_readPinnedConst('liteRtLmReleaseTag')}"',
+          'let liteRtLmTag = "v0.17.0-8"',
+        ),
+      ),
+    ),
+    (
+      'an edited manifest',
+      () => _flutterLiteRtLmOnlyUserDefines(
+        liteRtLmManifest: _liteRtLmCompanionManifest().replaceFirst(
+          '.target(name: "WebgpuDawn", condition: .when(platforms: [.macOS]))',
+          '.target(name: "WebgpuDawn", condition: .when(platforms: [.iOS]))',
+        ),
+      ),
+    ),
+    (
+      'an unresolved companion',
+      () => _flutterLiteRtLmOnlyUserDefines(resolveLiteRtLmCompanion: false),
+    ),
+  ]) {
+    test('build hook keeps Flutter macOS LiteRT-LM on the hook cache for '
+        '$scenario', () async {
       await testCodeBuildHook(
         mainMethod: build_hook.main,
         targetOS: OS.macOS,
         targetArchitecture: Architecture.arm64,
-        userDefines: await _flutterLiteRtLmOnlyUserDefines(),
+        userDefines: await defines(),
         check: (input, output) {
-          final codeAssets = output.assets.encodedAssets
-              .where((asset) => asset.isCodeAsset)
-              .map((asset) => asset.asCodeAsset)
-              .toList(growable: false);
-
-          expect(codeAssets, isEmpty);
+          expect(output.assets.encodedAssets, isEmpty);
           final outputDir = input.outputDirectory.toFilePath();
           expect(
             Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
@@ -648,34 +708,47 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
           );
         },
       );
-    },
-  );
+    });
+  }
 
   test(
-    'build hook mixes macOS llama.cpp SPM with LiteRT-LM hook assets',
+    'build hook keeps iOS LiteRT-LM on SwiftPM without probing the manifest',
     () async {
       await testCodeBuildHook(
         mainMethod: build_hook.main,
-        targetOS: OS.macOS,
+        targetOS: OS.iOS,
         targetArchitecture: Architecture.arm64,
-        userDefines: await _flutterAppleUserDefines(
-          dependencies: const [
-            'llamadart_llama_cpp_flutter',
-            'llamadart_litert_lm_flutter',
-          ],
+        targetIOSSdk: IOSSdk.iPhoneOS,
+        userDefines: await _flutterLiteRtLmOnlyUserDefines(
+          liteRtLmManifest: _publishedLiteRtLmCompanion0014Manifest(),
         ),
         check: (input, output) {
-          final codeAssets = output.assets.encodedAssets
-              .where((asset) => asset.isCodeAsset)
-              .map((asset) => asset.asCodeAsset)
-              .toList(growable: false);
+          expect(output.assets.encodedAssets, isEmpty);
+          final outputDir = input.outputDirectory.toFilePath();
+          expect(
+            Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+            isFalse,
+          );
+        },
+      );
+    },
+  );
 
-          expect(codeAssets, hasLength(1));
-          final codeAsset = codeAssets.single;
-          expect(codeAsset.id, 'package:llamadart/llamadart');
-          expect(codeAsset.file, isNull);
-          expect(codeAsset.linkMode, isA<LookupInProcess>());
-
+  test(
+    'build hook keeps non-Flutter macOS LiteRT-LM on the hook cache',
+    () async {
+      await testCodeBuildHook(
+        mainMethod: build_hook.main,
+        targetOS: OS.macOS,
+        targetArchitecture: Architecture.arm64,
+        userDefines: await _nonFlutterConsumerUserDefines(
+          dependencies: const ['llamadart_litert_lm_flutter'],
+          defines: {
+            'llamadart_native_runtimes': ['litert_lm'],
+          },
+        ),
+        check: (input, output) {
+          expect(output.assets.encodedAssets, isEmpty);
           final outputDir = input.outputDirectory.toFilePath();
           expect(
             Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
@@ -685,6 +758,68 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
       );
     },
   );
+
+  test('build hook hands both macOS runtimes to SwiftPM companions', () async {
+    await testCodeBuildHook(
+      mainMethod: build_hook.main,
+      targetOS: OS.macOS,
+      targetArchitecture: Architecture.arm64,
+      userDefines: await _flutterAppleUserDefines(
+        dependencies: const [
+          'llamadart_llama_cpp_flutter',
+          'llamadart_litert_lm_flutter',
+        ],
+      ),
+      check: (input, output) {
+        final codeAssets = output.assets.encodedAssets
+            .where((asset) => asset.isCodeAsset)
+            .map((asset) => asset.asCodeAsset)
+            .toList(growable: false);
+
+        expect(codeAssets, hasLength(1));
+        final codeAsset = codeAssets.single;
+        expect(codeAsset.id, 'package:llamadart/llamadart');
+        expect(codeAsset.file, isNull);
+        expect(codeAsset.linkMode, isA<LookupInProcess>());
+
+        final outputDir = input.outputDirectory.toFilePath();
+        expect(
+          Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  test('build hook mixes macOS llama.cpp SPM with LiteRT-LM hook assets for an '
+      'older LiteRT-LM companion', () async {
+    await testCodeBuildHook(
+      mainMethod: build_hook.main,
+      targetOS: OS.macOS,
+      targetArchitecture: Architecture.arm64,
+      userDefines: await _flutterAppleUserDefines(
+        dependencies: const [
+          'llamadart_llama_cpp_flutter',
+          'llamadart_litert_lm_flutter',
+        ],
+        liteRtLmManifest: _publishedLiteRtLmCompanion0014Manifest(),
+      ),
+      check: (input, output) {
+        final codeAssets = output.assets.encodedAssets
+            .where((asset) => asset.isCodeAsset)
+            .map((asset) => asset.asCodeAsset)
+            .toList(growable: false);
+
+        expect(codeAssets, hasLength(1));
+        expect(codeAssets.single.linkMode, isA<LookupInProcess>());
+        final outputDir = input.outputDirectory.toFilePath();
+        expect(
+          Directory(path.join(outputDir, 'llamadart_bin')).existsSync(),
+          isTrue,
+        );
+      },
+    );
+  });
 
   test(
     'build hook uses SPM process lookup for Flutter iOS llama.cpp companion',
@@ -920,14 +1055,31 @@ PackageUserDefines _emptyRuntimeUserDefines() => PackageUserDefines(
   ),
 );
 
-Future<PackageUserDefines> _flutterLiteRtLmOnlyUserDefines() {
+Future<PackageUserDefines> _flutterLiteRtLmOnlyUserDefines({
+  bool resolveLiteRtLmCompanion = true,
+  String? liteRtLmManifest,
+}) {
   return _flutterAppleUserDefines(
     dependencies: const ['llamadart_litert_lm_flutter'],
     defines: {
       'llamadart_native_runtimes': ['llama_cpp'],
     },
+    resolveLiteRtLmCompanion: resolveLiteRtLmCompanion,
+    liteRtLmManifest: liteRtLmManifest,
   );
 }
+
+/// The maintained companion manifest, which links the complete macOS runtime.
+String _liteRtLmCompanionManifest() => File(
+  'packages/llamadart_litert_lm_flutter/'
+  'darwin/llamadart_litert_lm_flutter/Package.swift',
+).readAsStringSync();
+
+/// The manifest published as companion 0.0.14, which links only LiteRtLm and
+/// the CLiteRTLM shim on macOS.
+String _publishedLiteRtLmCompanion0014Manifest() => File(
+  'test/fixtures/litert_lm/llamadart_litert_lm_flutter_0.0.14_Package.swift',
+).readAsStringSync();
 
 Future<PackageUserDefines> _nonFlutterConsumerUserDefines({
   required List<String> dependencies,
@@ -970,6 +1122,8 @@ Future<PackageUserDefines> _flutterAppleUserDefines({
   bool duplicateCompanion = false,
   bool localArtifacts = false,
   bool workspaceMember = false,
+  bool resolveLiteRtLmCompanion = true,
+  String? liteRtLmManifest,
   void Function(Directory)? mutate,
 }) async {
   final dir = await Directory.systemTemp.createTemp(
@@ -1002,6 +1156,7 @@ ${dependenciesYaml.trimRight()}
 ${dependencies.map((dependency) => '  $dependency: ^0.0.17').join('\n')}
 ''');
 
+  final packageEntries = <Map<String, String>>[];
   if (dependencies.contains('llamadart_llama_cpp_flutter') &&
       !missingConfiguration) {
     final companion = Directory(path.join(dir.path, 'resolved companion'));
@@ -1030,19 +1185,45 @@ ${dependencies.map((dependency) => '  $dependency: ^0.0.17').join('\n')}
     if (localArtifacts) {
       await Directory(path.join(manifest.parent.path, 'Artifacts')).create();
     }
-    final config = File(
-      path.join(dir.path, '.dart_tool', 'package_config.json'),
-    );
-    await config.parent.create();
     final entry = {
       'name': 'llamadart_llama_cpp_flutter',
       'rootUri': '../resolved%20companion',
     };
+    packageEntries.addAll([entry, if (duplicateCompanion) entry]);
+  }
+  if (dependencies.contains('llamadart_litert_lm_flutter') &&
+      resolveLiteRtLmCompanion &&
+      !missingConfiguration) {
+    final companion = Directory(
+      path.join(dir.path, 'resolved litert companion'),
+    );
+    final manifest = File(
+      path.join(
+        companion.path,
+        'darwin',
+        'llamadart_litert_lm_flutter',
+        'Package.swift',
+      ),
+    );
+    await manifest.parent.create(recursive: true);
+    await File(
+      path.join(companion.path, 'pubspec.yaml'),
+    ).writeAsString('name: llamadart_litert_lm_flutter\nversion: 0.0.14\n');
+    await manifest.writeAsString(
+      liteRtLmManifest ?? _liteRtLmCompanionManifest(),
+    );
+    packageEntries.add({
+      'name': 'llamadart_litert_lm_flutter',
+      'rootUri': '../resolved%20litert%20companion',
+    });
+  }
+  if (packageEntries.isNotEmpty) {
+    final config = File(
+      path.join(dir.path, '.dart_tool', 'package_config.json'),
+    );
+    await config.parent.create();
     await config.writeAsString(
-      jsonEncode({
-        'configVersion': 2,
-        'packages': [entry, if (duplicateCompanion) entry],
-      }),
+      jsonEncode({'configVersion': 2, 'packages': packageEntries}),
     );
   }
   mutate?.call(dir);

@@ -436,6 +436,53 @@ def _materialize_schema2_release_fixtures(
     )
 
 
+_MACOS_SPM_COMPANION_DIGEST = "b" * 64
+
+
+def _checked_in_litert_swift(tag: str = "v0.16.0-native.2") -> str:
+    source = (
+        Path(__file__).resolve().parents[2]
+        / "packages/llamadart_litert_lm_flutter/darwin/"
+        "llamadart_litert_lm_flutter/Package.swift"
+    ).read_text(encoding="utf-8")
+    return re.sub(r'let liteRtLmTag = "[^"]+"', f'let liteRtLmTag = "{tag}"', source)
+
+
+def _add_macos_bundle_library(manifest: dict, library: str) -> None:
+    platform = next(item for item in manifest["platforms"]
+        if item["platform"] == "macos" and item["arch"] == "arm64")
+    companion = f"bin/macos/arm64/{library}"
+    platform["artifactPaths"].append(companion)
+    artifact = dict(next(item for item in manifest["artifacts"]
+        if item["path"] == "bin/macos/arm64/libLiteRtLm.dylib"))
+    artifact.update(path=companion, fileName=library)
+    manifest["artifacts"].append(artifact)
+
+
+def _add_macos_spm_companions(manifest: dict, release: dict) -> None:
+    """Mirrors the v0.18.0 macOS GPU inventory and its flat-dylib xcframeworks."""
+    tag = manifest["release"]["tag"]
+    for library, target in (
+        ("libLiteRt.dylib", "LiteRt"),
+        ("libLiteRtTopKWebGpuSampler.dylib", "LiteRtTopKWebGpuSampler"),
+        ("libLiteRtWebGpuAccelerator.dylib", "LiteRtWebGpuAccelerator"),
+        ("libwebgpu_dawn.dylib", "WebgpuDawn"),
+    ):
+        _add_macos_bundle_library(manifest, library)
+        archive = f"litert-lm-native-apple-{target}-xcframework-{tag}.zip"
+        artifact = dict(next(item for item in manifest["artifacts"]
+            if item["path"].startswith("dist/spm/")))
+        artifact.update(
+            path=f"dist/spm/{tag}/{archive}",
+            fileName=archive,
+            sha256=_MACOS_SPM_COMPANION_DIGEST,
+        )
+        manifest["artifacts"].append(artifact)
+        release["assets"].append(
+            {"name": archive, "digest": "sha256:" + _MACOS_SPM_COMPANION_DIGEST}
+        )
+
+
 def _run_schema2_sync(
     temp_dir: Path,
     manifest: dict,
@@ -1776,7 +1823,13 @@ class SyncNativeReleasePinsTest(unittest.TestCase):
             ):
                 text = (repo / relative).read_text()
                 self.assertIn("libGemmaModelConstraintProvider.dylib", text)
-                self.assertIn("GemmaModelConstraintProvider.framework/Versions/A/GemmaModelConstraintProvider", text)
+                self.assertIn(
+                    "LiteRtLm.framework/Versions/A/Dependencies/"
+                    "libGemmaModelConstraintProvider.dylib",
+                    text,
+                )
+            runtime = (repo / "lib/src/backends/litert_lm/litert_lm_runtime.dart").read_text()
+            self.assertIn("GemmaModelConstraintProvider.framework/Versions/A/GemmaModelConstraintProvider", runtime)
             self.assertIn("libGemmaModelConstraintProvider.dylib", (repo / "lib/src/hook/native_release_pins.dart").read_text())
 
     def test_schema_2_sync_rejects_modern_provider_without_partial_pin_edits(self) -> None:
@@ -2045,26 +2098,68 @@ class SyncNativeReleasePinsTest(unittest.TestCase):
 
     def test_schema_2_sync_keeps_macos_gpu_companions_in_spm_completeness(self) -> None:
         manifest, release = _schema2_fixture_payloads()
-        platform = next(item for item in manifest["platforms"]
-            if item["platform"] == "macos" and item["arch"] == "arm64")
-        companion = "bin/macos/arm64/libLiteRtWebGpuAccelerator.dylib"
-        platform["artifactPaths"].append(companion)
-        artifact = dict(next(item for item in manifest["artifacts"]
-            if item["path"] == "bin/macos/arm64/libLiteRtLm.dylib"))
-        artifact.update(path=companion, fileName="libLiteRtWebGpuAccelerator.dylib")
-        manifest["artifacts"].append(artifact)
+        _add_macos_spm_companions(manifest, release)
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            result = _run_schema2_sync(root, manifest, release)
+            result = _run_schema2_sync(
+                root, manifest, release, starting_swift=_checked_in_litert_swift(),
+            )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            expected = (
+                "LiteRtLm.framework/Versions/A/LiteRtLm",
+                "libCLiteRTLM_mac.dylib",
+                "libLiteRt.dylib",
+                "libLiteRtTopKWebGpuSampler.dylib",
+                "libLiteRtWebGpuAccelerator.dylib",
+                "libwebgpu_dawn.dylib",
+            )
             runtime = (root / "repo/lib/src/backends/litert_lm/litert_lm_runtime.dart").read_text()
             function = runtime.split("liteRtLmMacOsRequiredNativeSpmFilesForAbi", 1)[1].split("\n}", 1)[0]
-            self.assertIn("LiteRtWebGpuAccelerator.framework/Versions/A/LiteRtWebGpuAccelerator", function)
+            arm64 = function.split("Abi.macosArm64", 1)[1].split("Abi.macosX64", 1)[0]
+            self.assertEqual(re.findall(r"'([^']+)'", arm64), list(expected))
+            self.assertNotIn("WebGpuAccelerator.framework", function)
             self.assertNotIn("GemmaModelConstraintProvider", function)
             prepare = (root / "repo/tool/macos_litert_lm_prepare_app.sh").read_text()
             function = prepare.split("required_native_spm_files()", 1)[1].split("\n}", 1)[0]
-            self.assertIn("LiteRtWebGpuAccelerator.framework/Versions/A/LiteRtWebGpuAccelerator", function)
-            self.assertNotIn("GemmaModelConstraintProvider", function)
+            arm64 = function.split("arm64)", 1)[1].split("x64)", 1)[0]
+            self.assertEqual(re.findall(r'"([^"]+)"', arm64), list(expected))
+            swift = (root / "repo/packages/llamadart_litert_lm_flutter/darwin/llamadart_litert_lm_flutter/Package.swift").read_text()
+            for target in ("LiteRt", "LiteRtTopKWebGpuSampler", "LiteRtWebGpuAccelerator", "WebgpuDawn"):
+                block = swift.split(f'name: "{target}",', 1)[1].split("),", 1)[0]
+                self.assertIn(f'checksum: "{_MACOS_SPM_COMPANION_DIGEST}"', block)
+
+    def test_schema_2_sync_rejects_package_swift_missing_macos_runtime_target(self) -> None:
+        manifest, release = _schema2_fixture_payloads()
+        _add_macos_spm_companions(manifest, release)
+        starting = re.sub(
+            r'(?ms)^[ \t]*nativeRepoBinaryTarget\(\s*name: "LiteRt",.*?^[ \t]*\),\n',
+            "",
+            _checked_in_litert_swift(),
+        )
+        starting = re.sub(r'(?m)^[ \t]*\.target\(name: "LiteRt", .*\n', "", starting)
+        self.assertNotIn('name: "LiteRt"', starting)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            result = _run_schema2_sync(root, manifest, release, starting_swift=starting)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("binary targets do not match", result.stdout + result.stderr)
+            runtime = root / "repo/lib/src/backends/litert_lm/litert_lm_runtime.dart"
+            self.assertEqual(
+                runtime.read_text(),
+                (Path(__file__).resolve().parents[2] / "lib/src/backends/litert_lm/litert_lm_runtime.dart").read_text(),
+            )
+
+    def test_schema_2_sync_rejects_macos_library_without_reviewed_spm_layout(self) -> None:
+        manifest, release = _schema2_fixture_payloads()
+        _add_macos_bundle_library(manifest, "libLiteRtFutureAccelerator.dylib")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            result = _run_schema2_sync(root, manifest, release)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(
+                "libLiteRtFutureAccelerator.dylib has no reviewed SwiftPM",
+                result.stdout + result.stderr,
+            )
 
     def test_schema_2_sync_generates_runtime_inventory_from_platform_paths(self) -> None:
         manifest, release = _schema2_fixture_payloads()

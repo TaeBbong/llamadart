@@ -226,6 +226,35 @@ LITERT_V0_16_ALLOWED_SPM_COMPANION_ASSET_PATTERNS = (
     "litert-lm-native-apple-WebgpuDawn-xcframework-{tag}.zip",
 )
 LITERT_ALLOWED_ACCELERATORS = {"gpu", "metal", "opencl", "webgpu"}
+# Where Xcode embeds each macOS runtime library from the owner xcframeworks:
+# (Package.swift target, path under <App>.app/Contents/Frameworks). Library
+# xcframeworks embed flat dylibs, framework xcframeworks embed versioned
+# bundles, and LiteRtLm.framework carries its own Gemma provider. The Metal
+# accelerator and sampler stay off macOS: their v0.18.0 macOS slices carry an
+# invalid signature that kills Debug launches, and the macOS GPU path loads the
+# WebGPU accelerator. A library missing here has an unreviewed layout and must
+# fail the sync.
+LITERT_MACOS_SPM_LAYOUT: dict[str, tuple[str | None, str | None]] = {
+    "libLiteRtLm.dylib": ("LiteRtLm", "LiteRtLm.framework/Versions/A/LiteRtLm"),
+    "libCLiteRTLM_mac.dylib": ("CLiteRTLMMac", "libCLiteRTLM_mac.dylib"),
+    "libGemmaModelConstraintProvider.dylib": (
+        None,
+        "LiteRtLm.framework/Versions/A/Dependencies/"
+        "libGemmaModelConstraintProvider.dylib",
+    ),
+    "libLiteRt.dylib": ("LiteRt", "libLiteRt.dylib"),
+    "libLiteRtMetalAccelerator.dylib": (None, None),
+    "libLiteRtTopKMetalSampler.dylib": (None, None),
+    "libLiteRtTopKWebGpuSampler.dylib": (
+        "LiteRtTopKWebGpuSampler",
+        "libLiteRtTopKWebGpuSampler.dylib",
+    ),
+    "libLiteRtWebGpuAccelerator.dylib": (
+        "LiteRtWebGpuAccelerator",
+        "libLiteRtWebGpuAccelerator.dylib",
+    ),
+    "libwebgpu_dawn.dylib": ("WebgpuDawn", "libwebgpu_dawn.dylib"),
+}
 
 
 class ReleaseError(RuntimeError):
@@ -580,6 +609,28 @@ def litert_schema2_apple_targets(
         for bundle, libraries in bundles.items() if bundle.startswith("ios-")
     ):
         targets.add("GemmaModelConstraintProvider")
+    allowed_asset_names = {
+        Path(path).name
+        for path in litert_spm_artifact_paths(
+            compatibility_tag,
+            release_tag,
+            allowed=True,
+        )
+    }
+    for bundle, libraries in bundles.items():
+        if not bundle.startswith("macos-"):
+            continue
+        for library in libraries:
+            target, _ = litert_macos_spm_layout(library)
+            if target is None:
+                continue
+            if f"{prefix}{target}{suffix}" not in allowed_asset_names:
+                raise ReleaseError(
+                    f"LiteRT-LM macOS runtime library {library} needs the "
+                    f"{target} SwiftPM artifact, which the owner inventory "
+                    "does not allow"
+                )
+            targets.add(target)
     if not targets:
         raise ReleaseError("LiteRT-LM schema-2 owner inventory has no Apple targets")
     return targets
@@ -3343,21 +3394,35 @@ def litert_schema2_macos_required_native_spm_files(
     return tuple(target_paths[target] for target in ("LiteRtLm", "CLiteRTLMMac"))
 
 
+def litert_macos_spm_layout(library: str) -> tuple[str | None, str | None]:
+    layout = LITERT_MACOS_SPM_LAYOUT.get(library)
+    if layout is None:
+        raise ReleaseError(
+            f"LiteRT-LM macOS runtime library {library} has no reviewed SwiftPM "
+            "app-bundle layout; inspect its owner xcframework and extend "
+            "LITERT_MACOS_SPM_LAYOUT"
+        )
+    return layout
+
+
 def litert_macos_complete_spm_entries(
     bundle_libraries: dict[str, tuple[str, ...]],
     native_spm_files: tuple[str, ...],
 ) -> dict[str, tuple[str, ...]]:
     # Core/shim linking does not establish availability of dynamic GPU plugins.
     # Require the complete per-architecture inventory before skipping raw staging.
-    frameworks = _litert_schema2_macos_framework_entries(bundle_libraries)
-    return {
-        arch: native_spm_files + tuple(
-            item for item in frameworks[arch]
-            if item not in native_spm_files
-            and item != "CLiteRTLM_mac.framework/Versions/A/CLiteRTLM_mac"
+    macos_bundles = _litert_schema2_macos_bundle_entries(bundle_libraries)
+    entries: dict[str, tuple[str, ...]] = {}
+    for arch in ("arm64", "x64"):
+        embedded = [
+            litert_macos_spm_layout(library)[1]
+            for library in sorted(macos_bundles[arch])
+        ]
+        entries[arch] = native_spm_files + tuple(
+            item for item in embedded
+            if item is not None and item not in native_spm_files
         )
-        for arch in ("arm64", "x64")
-    }
+    return entries
 
 
 def _render_litert_lm_shell_inventory_function(

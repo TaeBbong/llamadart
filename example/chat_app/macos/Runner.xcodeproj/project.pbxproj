@@ -205,7 +205,6 @@
 				33CC10EB2044A3C60003C045 /* Resources */,
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
-				A17E2C1B5C7747D5A3C40A23 /* Prepare LiteRT-LM Runtime */,
 			);
 			buildRules = (
 			);
@@ -331,25 +330,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh && touch Flutter/ephemeral/tripwire";
-		};
-		A17E2C1B5C7747D5A3C40A23 /* Prepare LiteRT-LM Runtime */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Prepare LiteRT-LM Runtime";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "set -euo pipefail\nconfig=\ndir=\"$PROJECT_DIR\"\nwhile [ \"$dir\" != / ]; do\n  if [ -f \"$dir/.dart_tool/package_config.json\" ]; then\n    config=\"$dir/.dart_tool/package_config.json\"\n    break\n  fi\n  dir=\"$(dirname \"$dir\")\"\ndone\nif [ -z \"$config\" ]; then\n  echo \"error: no .dart_tool/package_config.json above $PROJECT_DIR; run flutter pub get\" >&2\n  exit 1\nfi\nroot=\ncount=\"$(plutil -extract packages raw -o - \"$config\")\"\nfor ((i = 0; i < count; i++)); do\n  if [ \"$(plutil -extract \"packages.$i.name\" raw -o - \"$config\")\" = llamadart ]; then\n    root=\"$(plutil -extract \"packages.$i.rootUri\" raw -o - \"$config\")\"\n    break\n  fi\ndone\nif [ -z \"$root\" ]; then\n  echo \"error: llamadart is not resolved in $config\" >&2\n  exit 1\nfi\ncase \"$root\" in\n  file://*) root=\"${root#file://}\" ;;\n  *) root=\"$(dirname \"$config\")/$root\" ;;\nesac\nroot=\"$(printf '%b' \"${root//%/\\\\x}\")\"\nbash \"$root/tool/macos_litert_lm_prepare_app.sh\" \"$TARGET_BUILD_DIR/$WRAPPER_NAME\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

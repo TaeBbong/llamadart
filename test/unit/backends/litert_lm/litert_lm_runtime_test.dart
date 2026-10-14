@@ -505,15 +505,20 @@ void main() {
     expect(liteRtLmMacOsRequiredFrameworksForAbi(Abi.linuxX64), isEmpty);
   });
 
-  test('macOS LiteRT-LM native SPM validation follows runtime ABI', () {
-    expect(
-      liteRtLmMacOsRequiredNativeSpmFilesForAbi(Abi.macosArm64),
-      const <String>[
-        'LiteRtLm.framework/Versions/A/LiteRtLm',
-        'libCLiteRTLM_mac.dylib',
-        ..._macOsFrameworkFilesWithoutLiteRtLm,
-      ],
-    );
+  test('macOS LiteRT-LM native SPM validation matches the embedded layout', () {
+    // Xcode embeds library xcframeworks as flat dylibs and keeps the Gemma
+    // provider inside LiteRtLm.framework, as companion v0.18.0 builds do.
+    expect(liteRtLmMacOsRequiredNativeSpmFilesForAbi(Abi.macosArm64), const <
+      String
+    >[
+      'LiteRtLm.framework/Versions/A/LiteRtLm',
+      'libCLiteRTLM_mac.dylib',
+      'LiteRtLm.framework/Versions/A/Dependencies/libGemmaModelConstraintProvider.dylib',
+      'libLiteRt.dylib',
+      'libLiteRtTopKWebGpuSampler.dylib',
+      'libLiteRtWebGpuAccelerator.dylib',
+      'libwebgpu_dawn.dylib',
+    ]);
     expect(
       liteRtLmMacOsRequiredNativeSpmFilesForAbi(Abi.macosX64),
       const <String>[
@@ -827,17 +832,6 @@ const List<String> _macOsFrameworkFiles = <String>[
       'GemmaModelConstraintProvider',
   'LiteRt.framework/Versions/A/LiteRt',
   'LiteRtLm.framework/Versions/A/LiteRtLm',
-  'LiteRtMetalAccelerator.framework/Versions/A/LiteRtMetalAccelerator',
-  'LiteRtTopKMetalSampler.framework/Versions/A/LiteRtTopKMetalSampler',
-  'LiteRtTopKWebGpuSampler.framework/Versions/A/LiteRtTopKWebGpuSampler',
-  'LiteRtWebGpuAccelerator.framework/Versions/A/LiteRtWebGpuAccelerator',
-  'webgpu_dawn.framework/Versions/A/webgpu_dawn',
-];
-
-const List<String> _macOsFrameworkFilesWithoutLiteRtLm = <String>[
-  'GemmaModelConstraintProvider.framework/Versions/A/'
-      'GemmaModelConstraintProvider',
-  'LiteRt.framework/Versions/A/LiteRt',
   'LiteRtMetalAccelerator.framework/Versions/A/LiteRtMetalAccelerator',
   'LiteRtTopKMetalSampler.framework/Versions/A/LiteRtTopKMetalSampler',
   'LiteRtTopKWebGpuSampler.framework/Versions/A/LiteRtTopKWebGpuSampler',

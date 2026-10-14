@@ -86,6 +86,16 @@ for platform in manifest['platforms']:
         platform['artifactPaths'].append(f"bin/ios/{platform['arch']}/{provider}.framework/{provider}")
 release['assets'].append({'name': f'litert-lm-native-apple-{provider}-xcframework-{tag}.zip',
                           'digest': 'sha256:' + 'a' * 64})
+# The checked-in manifest links the v0.18.0 macOS GPU inventory.
+for platform in manifest['platforms']:
+    if platform['platform'] == 'macos' and platform['arch'] == 'arm64':
+        for library, target in (('libLiteRt.dylib', 'LiteRt'),
+                                ('libLiteRtTopKWebGpuSampler.dylib', 'LiteRtTopKWebGpuSampler'),
+                                ('libLiteRtWebGpuAccelerator.dylib', 'LiteRtWebGpuAccelerator'),
+                                ('libwebgpu_dawn.dylib', 'WebgpuDawn')):
+            platform['artifactPaths'].append(f'bin/macos/arm64/{library}')
+            release['assets'].append({'name': f'litert-lm-native-apple-{target}-xcframework-{tag}.zip',
+                                      'digest': 'sha256:' + 'b' * 64})
 source = Path('packages/llamadart_litert_lm_flutter/darwin/llamadart_litert_lm_flutter/Package.swift').read_text()
 print(prepare_litert_lm_package_swift(source, release=release, manifest=manifest, resolved_tag=tag))
 ''',

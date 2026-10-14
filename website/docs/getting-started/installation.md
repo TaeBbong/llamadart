@@ -61,9 +61,18 @@ Pair companion `0.0.22` with core `0.12.0`; keep `0.0.21` with core `0.11.1`
 and `0.11.0`. The build checks the
 resolved llama.cpp and stable_diffusion companions' runtime pins and fails on
 a mismatch or on an unverified local `Artifacts` override; resolve the
-matching companion and rerun `flutter pub get`. Flutter macOS LiteRT-LM builds
-still use the core package's native-assets runtime rather than SwiftPM, and
-need the [build phase below](#flutter-macos-litert-lm-build-phase).
+matching companion and rerun `flutter pub get`. On macOS,
+`llamadart_litert_lm_flutter` links and embeds the complete LiteRT-LM runtime,
+including the GPU accelerators. The build uses it only when the resolved
+companion's `Package.swift` is the one this core release expects; any other
+companion keeps macOS LiteRT-LM in the hook cache with a build warning, and the
+app then needs the [build phase below](#flutter-macos-litert-lm-build-phase).
+
+The companion's macOS `LiteRt`, WebGPU accelerator and sampler, and Dawn
+libraries are published for arm64 only, so a universal
+`flutter build macos` prints
+`ld: warning: ignoring file ... found architecture 'arm64', required
+architecture 'x86_64'` for each of them.
 
 Pair `llamadart_stable_diffusion_flutter` `0.0.3` with core `0.12.0`. Keep
 `0.0.2` with core `0.11.1` and `0.11.0`, and `0.0.1` with core `0.10.0`;
@@ -91,17 +100,20 @@ runtime's three categories itself. Copy the categories and codes from
 
 ### Flutter macOS LiteRT-LM build phase
 
-A Flutter macOS app does not get the LiteRT-LM runtime in its bundle, with or
-without `llamadart_litert_lm_flutter`. The build hook leaves the libraries in
-its cache inside the resolved `llamadart` package, and the app loads them from
-there only when it runs unsandboxed, on the build machine, from inside the
-project. Under the App Sandbox, which `flutter create` turns on, and in any
-copied or distributed app, the first LiteRT-LM generation on CPU or GPU throws
+A Flutter macOS app gets the LiteRT-LM runtime in its bundle only from a
+`llamadart_litert_lm_flutter` that matches the core. With llamadart `0.12.0`
+and earlier, with companion `0.0.14` and earlier, or without the companion,
+the build hook leaves the libraries in its cache inside the resolved
+`llamadart` package, and the app loads them from there only when it runs unsandboxed, on
+the build machine, from inside the project. Under the App Sandbox, which
+`flutter create` turns on, and in any copied or distributed app, the first
+LiteRT-LM generation on CPU or GPU throws
 `Failed to load dynamic library 'libLiteRt.dylib'`
 ([#1029](https://github.com/leehack/llamadart/issues/1029)). llama.cpp is not
 affected.
 
-Add a build phase that copies the runtime into the app:
+Upgrade the core and the companion together. Until then, add a build phase
+that copies the runtime into the app:
 
 1. Open `macos/Runner.xcworkspace` in Xcode and select the **Runner** target.
 2. In **Build Phases**, add a **New Run Script Phase** and drag it to the end
@@ -149,7 +161,9 @@ The script finds the resolved `llamadart` package through
 dependencies and in pub workspaces, and runs that package's
 `tool/macos_litert_lm_prepare_app.sh`. That script copies the libraries for
 the build Mac's architecture only into `Contents/Frameworks/LiteRtLmRuntime`
-and signs them with the build's signing identity.
+and signs them with the build's signing identity. Once the companion embeds
+the runtime, the script detects it and copies nothing, so the phase can be
+removed.
 
 ## Web
 
@@ -183,7 +197,8 @@ On the first `dart run` / `flutter run` for a native target, `llamadart`:
    `leehack/litert-lm-native`.
 3. Wires them into your app through native assets. Flutter iOS builds use
    SwiftPM-linked XCFrameworks when the matching companion packages are present;
-   Flutter macOS LiteRT-LM keeps its libraries in the hook cache and needs the
+   without the LiteRT-LM companion, Flutter macOS LiteRT-LM keeps its libraries
+   in the hook cache and needs the
    [build phase](#flutter-macos-litert-lm-build-phase) in the app. The
    opt-in image generation runtime comes from `leehack/stable-diffusion-native`
    the same way.
