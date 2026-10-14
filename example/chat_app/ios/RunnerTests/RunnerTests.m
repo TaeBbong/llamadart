@@ -13,12 +13,15 @@ INTEGRATION_TEST_IOS_RUNNER(RunnerTests)
   [self llamadart_attachLatestRunIn:[documents URLByAppendingPathComponent:@"validation/runs" isDirectory:YES]
                          extensions:@[@"json", @"jsonl", @"csv", @"xml", @"html"]
                            maxBytes:2 * 1024 * 1024];
-  // The image test writes its receipt and PNGs to the app cache directory,
-  // which Test Lab does not collect on iOS.
+  // The image tests write their receipts and PNGs to the app cache
+  // directory, which Test Lab does not collect on iOS.
   NSURL *caches = [files URLsForDirectory:NSCachesDirectory
                                 inDomains:NSUserDomainMask].firstObject;
   [self llamadart_attachLatestRunIn:[caches URLByAppendingPathComponent:@"image_generation_e2e" isDirectory:YES]
                          extensions:@[@"json", @"png"]
+                           maxBytes:16 * 1024 * 1024];
+  [self llamadart_attachLatestRunIn:[caches URLByAppendingPathComponent:@"image_settings" isDirectory:YES]
+                         extensions:@[@"json", @"jsonl", @"png"]
                            maxBytes:16 * 1024 * 1024];
   [super tearDown];
 }
