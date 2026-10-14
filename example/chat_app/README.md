@@ -831,6 +831,59 @@ temperature 0, seed 1). The matching build-time defaults are
 empty string keeps its default. Fewer than three iterations record the steps
 without the memory check.
 
+#### LiteRT-LM bundle in a read-only directory
+
+`integration_test/litert_lm_read_only_bundle_e2e_test.dart` hard-links the
+locked `chat-litert-*` validation model into directories it sets to mode 555
+and loads it through `LlamaEngine(LlamaBackend())` with
+`ModelParams.liteRtLmCacheDir` unset, as an app that ships a model in its
+bundle does. Four cases run in one process, in this order:
+
+| Case | Bundle name | Backend | Judged |
+| --- | --- | --- | --- |
+| `unsuffixed` | `Qwen3-0.6B` | `cpu`, then `gpu` | must generate |
+| `litertlm` | `Qwen3-0.6B.litertlm` | `gpu`, then `cpu` | recorded: generates or throws a `LlamaException` ([#976](https://github.com/leehack/llamadart/issues/976)) |
+
+Every case fails when the directory is writable, when its mode or its entries
+change, on an empty reply and on any error that is not a `LlamaException`.
+The run also fails when the entries beside the original model file change.
+Each case logs a `started` line, a `dir` line with the directory as observed
+before the load, its result with the reply or the error type and message on
+the line before, and a `dir` line after the load. Two `origin` lines after the
+last case list the original file's directory before the first case and after
+the last:
+
+```text
+E2E read-only bundle: dir case=<id> backend=<cpu|gpu> when=<before|after> writable=<true|false> mode=<0555> entries=<json list>
+E2E read-only bundle: case=<id> backend=<cpu|gpu> outcome=<ok|empty_reply|typed_error:<Type>> ms=<n>
+E2E read-only bundle: origin when=<before|after> entries=<json list>
+```
+
+```sh
+dart run tool/testing/run_local_e2e.dart \
+  --scenario chat-app-litert-read-only-bundle --device <device>
+```
+
+macOS and Android default to a temp cache directory, so of the targets this
+test runs on only iOS and Linux load the bundle uncached through the public
+API (it needs POSIX `link` and `chmod`, so not Windows), while on macOS and Android
+every case generates and the run checks the harness. To run the service with
+that default off on such a host, instead of the public backend, call
+`flutter test` as the scenario prints it and add
+`--dart-define=LITERT_READ_ONLY_NO_TEMP_CACHE=true`.
+
+For iOS Test Lab, build the XCTest bundle from that target and submit
+`tests.zip` as an `xctest`; the result lines are in `xcodebuild_output.log`:
+
+```sh
+flutter build ios --config-only --release \
+  --target integration_test/litert_lm_read_only_bundle_e2e_test.dart
+(cd ios && xcodebuild -workspace Runner.xcworkspace -scheme Runner \
+  -configuration Release -sdk iphoneos -destination generic/platform=iOS \
+  -derivedDataPath <derived-data> build-for-testing DEVELOPMENT_TEAM=<team>)
+(cd <derived-data>/Build/Products && zip -q -r <out>/tests.zip .)
+```
+
 #### Micro-batch sweep and the Android Vulkan prompt cap
 
 `integration_test/micro_batch_sweep_e2e_test.dart` loads the locked
