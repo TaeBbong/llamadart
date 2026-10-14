@@ -667,12 +667,14 @@ dependency_overrides: {llamadart_llama_cpp_flutter: {path: resolved companion}}
           ),
         );
         final arch = architecture == Architecture.arm64 ? 'arm64' : 'x64';
+        // The hook joins the platform and arch with '/', so normalise Windows
+        // separators before matching the cache directory.
         expect(
-          records,
+          records.map((record) => record.replaceAll(r'\\', '/')),
           contains(
             allOf(
               startsWith('Using cached LiteRT-LM bundle: '),
-              endsWith(path.join('macos', arch)),
+              endsWith('macos/$arch'),
             ),
           ),
         );
