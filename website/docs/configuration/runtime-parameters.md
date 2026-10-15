@@ -219,6 +219,10 @@ disposed, or until the process exits when the engine's worker was stopped
 without disposing it. An engine prunes the caches of its own model, since it
 disposes its previous native engine first, but while two engines use the same
 model file with one directory neither deletes that model's program caches.
+The native engine, and so its lease, starts at the first generation or
+tokenization after `loadModel`, not at `loadModel` itself. Until then another
+engine pruning the same directory may delete that model's program caches,
+which costs a one-time recompile on the first generation.
 
 A lease left by a process that crashed is taken for one of the pruning
 process when the two share a process ID, as can happen when a container
@@ -232,8 +236,9 @@ on the macOS GPU backend, every engine create appended about 0.5 GB to
 `*_mldrift_program_cache.bin`, later creates logged
 `Deserialization failed: DATA_LOSS`, and deleting the file did not slow engine
 create. llamadart can create an engine more than once per loaded model: on the
-first generation or tokenization after each context create, and again when
-speculative decoding, vision, audio or image-count settings change.
+first generation, tokenization or detokenization after each context create,
+and again when speculative decoding, vision, audio or image-count settings
+change.
 
 With the pinned `v0.18.0` on the macOS GPU backend, the program cache of
 Qwen3 0.6B (4 MB) and Gemma 4 E2B (11 MB) no longer grows after the first
