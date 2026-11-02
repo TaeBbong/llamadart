@@ -79,6 +79,17 @@ void main() {
       isFalse,
     );
   });
+
+  test('leaves example demo recordings out of the core archive', () async {
+    expect(
+      await _isIgnored(repository, 'example/screenshot_inbox/doc/demo.mp4'),
+      isTrue,
+    );
+    expect(
+      await _isIgnored(repository, 'example/screenshot_inbox/README.md'),
+      isFalse,
+    );
+  });
 }
 
 Future<bool> _isIgnored(Directory repository, String candidate) async {

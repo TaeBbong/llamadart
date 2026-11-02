@@ -28,6 +28,9 @@ a.out.wasm
 __pycache__/
 *.pyc
 
+# Example demo recordings: linked from GitHub, too large for the archive.
+*.mp4
+
 # Large local model/test assets
 *.gguf
 /models/

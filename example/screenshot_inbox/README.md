@@ -11,6 +11,11 @@ call, and each runs only through the platform's own UI when you tap it (the
 system event sheet, the maps app, the clipboard). Deleting goes through the
 system's confirmation.
 
+[Demo video](doc/demo.mp4) (35 s): Qwen3.5 4B, built with
+`--dart-define=MODEL=4b`, on the iOS Simulator's CPU; the sorting is sped up
+8×. On the same simulator, 2B gave the parcel notice a calendar event and a
+maps search for the product name.
+
 ## How it works
 
 - `PhotoLibrary` (`lib/src/library.dart`) reads the newest 400 images through

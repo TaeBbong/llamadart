@@ -14,6 +14,11 @@ and other private details and boxes each one; the app blacks them out, drops
 the file's metadata, GPS location included, and hands the copies to the
 system share sheet. You can leave any box visible.
 
+[Demo video][demo] (45 s): Qwen3.5 4B, built with `--dart-define=MODEL=4b`, on
+the iOS Simulator's CPU; the checking is sped up 8×.
+
+[demo]: https://github.com/leehack/llamadart/blob/main/example/privacy_guard/doc/demo.mp4
+
 ## Run
 
 ```bash

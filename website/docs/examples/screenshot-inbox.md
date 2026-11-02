@@ -14,6 +14,13 @@ poster or a coupon's expiry, a maps search for a place, a copied coupon code
 or tracking number. You mark the ones you are done with and delete them
 together. No image leaves the device.
 
+[Demo video][demo] (35 s): Qwen3.5 4B, built with `--dart-define=MODEL=4b`, on
+the iOS Simulator's CPU; the sorting is sped up 8×. On the same simulator, 2B
+gave the parcel notice a calendar event and a maps search for the product
+name.
+
+[demo]: https://github.com/leehack/llamadart/blob/main/example/screenshot_inbox/doc/demo.mp4
+
 ## Run
 
 ```bash

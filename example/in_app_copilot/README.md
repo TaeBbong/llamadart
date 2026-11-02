@@ -7,6 +7,9 @@ charged twice? Delete the extra one*: the model calls the app's tools, the
 budget bars and expense list change as it works, and a deletion waits for
 your approval. It shows how to add an on-device agent to an existing app.
 
+[Demo video](doc/demo.mp4) (47 s): Qwen3.5 4B on the iOS Simulator's CPU; the
+model's turns are sped up 4 to 6×.
+
 ## How it works
 
 - `Ledger` (`lib/src/ledger.dart`) is the app's data: expenses and a monthly

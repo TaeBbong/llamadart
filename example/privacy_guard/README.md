@@ -8,6 +8,10 @@ and hands the copies to the system share sheet. You can leave any box
 visible. Checking a photo for private details is the one job you should not
 send to a server, so the model runs on the device.
 
+[Demo video](doc/demo.mp4) (45 s): Qwen3.5 4B, built with
+`--dart-define=MODEL=4b`, on the iOS Simulator's CPU; the checking is sped up
+8×.
+
 ## How it works
 
 - Photos come from the system photo picker (`image_picker`), which needs no

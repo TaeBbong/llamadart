@@ -13,6 +13,11 @@ delivery budget by 20%* or *Was any taxi ride charged twice? Delete the extra
 one*: the model calls the app's tools, the budget bars and expense list
 change as it works, and a deletion waits for your approval.
 
+[Demo video][demo] (47 s): Qwen3.5 4B on the iOS Simulator's CPU; the model's
+turns are sped up 4 to 6×.
+
+[demo]: https://github.com/leehack/llamadart/blob/main/example/in_app_copilot/doc/demo.mp4
+
 ## Run
 
 ```bash
