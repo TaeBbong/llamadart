@@ -404,6 +404,9 @@ the same libraries. Details and the pub workspace rules:
 - [Basic Dart CLI](https://github.com/leehack/llamadart/tree/main/example/basic_app)
 - [Flutter chat app](https://github.com/leehack/llamadart/tree/main/example/chat_app)
 - [Laya Tetris, a Flutter game played by a decision model](https://github.com/leehack/llamadart/tree/main/example/laya_tetris)
+- [Screenshot Inbox, a Flutter agent that sorts screenshots into one-tap follow-ups](https://github.com/leehack/llamadart/tree/main/example/screenshot_inbox)
+- [Privacy Guard, a Flutter agent that blacks out private details in photos](https://github.com/leehack/llamadart/tree/main/example/privacy_guard)
+- [In-app Copilot, a Flutter budget app with an agent that uses its functions](https://github.com/leehack/llamadart/tree/main/example/in_app_copilot)
 - [HTTP server example](https://github.com/leehack/llamadart/tree/main/example/llamadart_server)
 - [TUI coding agent example](https://github.com/leehack/llamadart/tree/main/example/tui_coding_agent)
 

@@ -1,0 +1,29 @@
+name: in_app_copilot_example
+description: A budget app with a copilot that reads and changes the app's own data through llamadart's tool calling.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+  flutter: ^3.41.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  args: ^2.4.2
+  llamadart:
+    path: ../..
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+hooks:
+  user_defines:
+    llamadart:
+      llamadart_native_runtimes: [llama_cpp]

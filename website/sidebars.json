@@ -79,7 +79,10 @@
         "examples/llamadart-server",
         "examples/tui-coding-agent",
         "examples/laya-tetris",
-        "examples/laya-command-bar"
+        "examples/laya-command-bar",
+        "examples/screenshot-inbox",
+        "examples/privacy-guard",
+        "examples/in-app-copilot"
       ]
     },
     {

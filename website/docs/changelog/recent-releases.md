@@ -9,6 +9,12 @@ For canonical full release notes, use:
 
 ## Unreleased
 
+- Add three agent examples, Flutter apps on Qwen3.5 2B or 4B:
+  `example/screenshot_inbox` sorts screenshots and proposes calendar events,
+  maps searches and codes to copy; `example/privacy_guard` boxes ID cards,
+  card numbers and other private details in photos and blacks them out
+  before sharing; `example/in_app_copilot` is a budget app whose copilot
+  acts through the app's own functions.
 - With `llamadart_native_tag` or `llamadart_native_repository` set, the build
   hook keeps the release's `SHA256SUMS` beside the cached archive and verifies
   a cached archive against it without network access, so offline builds work

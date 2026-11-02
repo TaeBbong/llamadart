@@ -171,6 +171,62 @@ flutter run -d macos
 Web needs the WebGPU bridge assets and cross-origin isolation headers; see
 [`laya_command_bar/README.md`](laya_command_bar/README.md#web).
 
+### 8. Screenshot Inbox (`screenshot_inbox/`)
+A Flutter app (macOS, iOS, Android) in which a Qwen3.5 vision model sorts
+your newest screenshots:
+
+- Image input and one tool call per screenshot, with the kind, a summary and
+  at most one event, place and text to copy
+- Follow-ups that run only when tapped, through the system event sheet, the
+  maps app or the clipboard, and deletion through the system's confirmation
+- `bin/triage.dart` to sort image files with local or downloaded models
+
+**Best for:** Image input and tool calls in a mobile agent
+
+**Run:**
+```bash
+cd screenshot_inbox
+flutter pub get
+flutter run -d macos
+```
+
+### 9. Privacy Guard (`privacy_guard/`)
+A Flutter app (macOS, iOS, Android) that checks photos before you share them:
+
+- A Qwen3.5 vision model boxes ID cards, card numbers, names, addresses,
+  barcodes and other private details through one tool call
+- Solid black fill, a margin around each box, and no metadata in the shared
+  copies; any box can be left visible
+- `bin/scan.dart` to check image files and write the blacked-out copies
+
+**Best for:** Visual grounding through tool calls
+
+**Run:**
+```bash
+cd privacy_guard
+flutter pub get
+flutter run -d macos
+```
+
+### 10. In-app Copilot (`in_app_copilot/`)
+A Flutter budget app (macOS, iOS, Android) with an on-device copilot:
+
+- Six of the app's functions as tools, run by `ChatSession.sendWithTools`
+- Bad arguments answered with messages the model retries from, and approval
+  before deleting
+- Tool calls shown as they happen, and app widgets that update from the
+  app's data
+- `bin/copilot.dart` to run requests over the sample ledger
+
+**Best for:** Adding an agent to an existing Flutter app
+
+**Run:**
+```bash
+cd in_app_copilot
+flutter pub get
+flutter run -d macos
+```
+
 ## Testing
 
 - `basic_app` (Dart console):
@@ -222,12 +278,19 @@ cd laya_command_bar
 flutter test
 ```
 
-Note: `chat_app`, `laya_tetris` and `laya_command_bar` use Flutter libraries (`dart:ui`), so
-`dart test` is not the correct runner for those examples.
+- `screenshot_inbox`, `privacy_guard` and `in_app_copilot` (Flutter agents):
+
+```bash
+cd screenshot_inbox   # or privacy_guard, in_app_copilot
+flutter test
+```
+
+Note: the Flutter examples use Flutter libraries (`dart:ui`), so `dart test`
+is not the correct runner for them.
 
 ## Quick Start
 
-1. **Choose an example**: Basic (console), Chat (Flutter), API Server (Relic), llama.cpp-style CLI clone (Dart), TUI coding agent (Dart + nocterm), Laya Tetris (Flutter decision-model game), or Laya Command Bar (Flutter command bar)
+1. **Choose an example**: Basic (console), Chat (Flutter), API Server (Relic), llama.cpp-style CLI clone (Dart), TUI coding agent (Dart + nocterm), Laya Tetris (Flutter decision-model game), Laya Command Bar (Flutter command bar), or the Flutter agents Screenshot Inbox, Privacy Guard and In-app Copilot
 2. **Download a model** (see each example's README)
 3. **Run the example**: Follow instructions in each subdirectory
 
@@ -285,6 +348,13 @@ example/
 │   ├── lib/            # Bar, gate, runner, readers, and parsers
 │   ├── pubspec.yaml    # Dependencies
 │   └── README.md       # Instructions
+├── screenshot_inbox/   # Flutter screenshot-sorting agent
+├── privacy_guard/      # Flutter photo-redacting agent
+├── in_app_copilot/     # Flutter budget app with a copilot
+│   ├── bin/            # Headless runs with local or downloaded models
+│   ├── lib/            # Model, tools, controller and UI
+│   ├── pubspec.yaml    # Dependencies
+│   └── README.md       # Instructions
 └── chat_app/           # Flutter application
     ├── lib/            # Flutter code
     ├── android/        # Android config
@@ -302,7 +372,9 @@ example/
 ## Requirements
 
 - Dart SDK 3.10.7 or higher
-- For chat_app, laya_tetris and laya_command_bar: Flutter 3.38.0 or higher
+- For chat_app, laya_tetris and laya_command_bar: Flutter 3.38.0 or higher;
+  for screenshot_inbox, privacy_guard and in_app_copilot: Flutter 3.41.0 or
+  higher
 - Flutter Apple builds require deployment targets of iOS 16.4 or newer and
   macOS 14.0 or newer
 - Internet connection (for first run - downloads selected native runtime

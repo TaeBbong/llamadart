@@ -17,6 +17,13 @@ style.
   decision model.
 - [Laya Command Bar](./laya-command-bar): Flutter text field that a decision
   model, an embedding model or a small LLM reshapes as you type.
+- [Screenshot Inbox](./screenshot-inbox): Flutter app in which a vision model
+  sorts screenshots and proposes one-tap calendar events, maps searches and
+  codes to copy.
+- [Privacy Guard](./privacy-guard): Flutter app in which a vision model boxes
+  private details in photos, blacked out before sharing.
+- [In-app Copilot](./in-app-copilot): Flutter budget app with a copilot that
+  acts through the app's own functions.
 - [llama.cpp-Style CLI](./llamadart-cli): terminal chat with llama.cpp-style
   arguments and parity tooling.
 - [OpenAI-compatible server](./llamadart-server): OpenAI-style HTTP API over
@@ -37,6 +44,9 @@ style.
 - Build a product UI: Chat App.
 - Run decision models in a real-time app: Laya Tetris.
 - Drive interactive UI from a classifier: Laya Command Bar.
+- Combine image input and tool calls in an app: Screenshot Inbox or Privacy
+  Guard.
+- Add an agent to an existing app: In-app Copilot.
 - Keep a llama.cpp terminal workflow: llama.cpp-Style CLI.
 - Serve tools and agents over HTTP: OpenAI-Compatible Server.
 - Build an interactive coding agent in the terminal: TUI Coding Agent.

@@ -43,10 +43,13 @@ const List<WorkspacePackage> workspacePackages = <WorkspacePackage>[
   WorkspacePackage('.', WorkspacePackageManager.flutter),
   WorkspacePackage('example/basic_app', WorkspacePackageManager.flutter),
   WorkspacePackage('example/chat_app', WorkspacePackageManager.flutter),
+  WorkspacePackage('example/in_app_copilot', WorkspacePackageManager.flutter),
   WorkspacePackage('example/laya_command_bar', WorkspacePackageManager.flutter),
   WorkspacePackage('example/laya_tetris', WorkspacePackageManager.flutter),
   WorkspacePackage('example/llamadart_cli', WorkspacePackageManager.dart),
   WorkspacePackage('example/llamadart_server', WorkspacePackageManager.dart),
+  WorkspacePackage('example/privacy_guard', WorkspacePackageManager.flutter),
+  WorkspacePackage('example/screenshot_inbox', WorkspacePackageManager.flutter),
   WorkspacePackage('example/tui_coding_agent', WorkspacePackageManager.dart),
   WorkspacePackage(
     'packages/llamadart_validation',
